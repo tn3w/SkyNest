@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="{{ language }}">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Log in | SkyNest</title>
+        <style>
+            :root {
+                --background: #f7f9fc;
+                --text: #333333;
+                --button-background: #d1d5db;
+                --button-hover: #b0b3b8;
+                --highlight-blue: #007bff;
+                --second-highlight-blue: #66b2ff;
+                {% if error|default %}
+                --error: #ff6c6c;
+                --second-error: #ff3f3f;
+                {% endif %}
+            }
+
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --background: #1a1a1a;
+                    --text: #f2f2f2;
+                    --button-background: #4a4a4a;
+                    --button-hover: #6a6a6a;
+                    --highlight-blue: #66b2ff;
+                    --second-highlight-blue: #007bff;
+                    {% if error|default %}
+                    --error: #ff3f3f;
+                    --second-error: #ff6c6c;
+                    {% endif %}
+                }
+            }
+
+            * {
+                margin: 0;
+                font-family: Arial, sans-serif;
+                color: var(--text);
+                text-align: center;
+            }
+
+            body {
+                background-color: var(--background);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+            }
+
+            svg {
+                width: 150px;
+                height: 150px;
+            }
+
+            h1 {
+                font-size: 2.5em;
+                margin-bottom: 0.2em;
+            }
+
+            .caption {
+                margin-bottom: 1.5em;
+            }
+
+            form {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .input {
+                padding: 0.8em;
+                width: 275px;
+                border: 1px solid var(--button-hover);
+                background-color: var(--background);
+                border-radius: 10px;
+                margin-bottom: 1em;
+                font-size: 1em;
+                text-align: left;
+            }
+
+            .input:focus {
+                border-color: var(--highlight-blue);
+                outline: none;
+            }
+
+            .password-container {
+                position: relative;
+                display: inline-block;
+                width: 100%;
+                margin-bottom: 1em;
+            }
+
+            .password-input {
+                padding-right: 40px;
+                width: 100%;
+                box-sizing: border-box;
+                margin-bottom: 0;
+            }
+
+            .toggle-icon {
+                position: absolute;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                cursor: pointer;
+                width: 24px;
+                height: 24px;
+            }
+
+            .toggle-icon svg {
+                width: 100%;
+                height: 100%;
+            }
+
+            .powbox {
+                width: 280px;
+            }
+
+            button {
+                padding: 0.8em 1.5em;
+                background-color: var(--button-background);
+                color: var(--text);
+                border: none;
+                border-radius: 10px;
+                font-size: 1em;
+                cursor: pointer;
+                transition: background-color 0.3s;
+                margin-top: 1em;
+                width: 250px;
+                text-decoration: none;
+            }
+
+            button:hover {
+                background-color: var(--button-hover);
+            }
+            {% if creator|default %}
+
+            .creator {
+                margin-top: 3rem;
+                font-size: 0.7em;
+            }
+            {% endif %}
+            {% if error|default %}
+            .error {
+                border-color: var(--error);
+            }
+
+            .error:focus {
+                border-color: var(--second-error);
+            }
+
+            .error-message {
+                background-color: var(--error);
+                padding: 0.75em;
+                border-radius: 12px;
+                font-size: 1em;
+                margin-bottom: 1em;
+                max-width: 600px;
+                text-align: center;
+            }
+            {% endif %}
+        </style>
+    </head>
+    <body>
+        <a href="/">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 376.22 376.22" xml:space="preserve">
+                <defs>
+                    <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color: var(--highlight-blue); stop-opacity: 1"/>
+                        <stop offset="100%" style="stop-color: var(--second-highlight-blue); stop-opacity: 1"/>
+                    </linearGradient>
+                </defs>
+                <path fill="url(#blueGradient)" d="M338.103 201.978a68.3 68.3 0 0 0 2.61-18.756c0-37.746-30.708-68.455-68.454-68.455-15.702 0-31.042 5.453-43.193 15.354-10.807 8.805-18.705 20.773-22.558 34.057-25.26-2.36-48.097 13.667-55.234 37.059a52.6 52.6 0 0 0-11.671-1.309c-29.051 0-52.686 23.464-52.686 52.514s23.635 52.515 52.686 52.515h183.931c29.051 0 52.685-23.464 52.685-52.515.001-23.766-15.729-44.075-38.116-50.464m-207.701-24.73 2.936.016 1.444-2.556c10.411-18.427 29.165-30.778 50.168-33.04l2.788-.3 1.197-2.535a82 82 0 0 1 3.334-6.313l2.045-3.498-2.998-2.725c-8.986-8.17-20.753-12.669-33.131-12.669-1.311 0-2.637.054-3.968.162-7.85-24.892-32.261-42.525-59.755-42.525-34.414 0-62.412 26.82-62.412 59.787 0 5.289.718 10.5 2.141 15.555C14.072 152.409 0 170.187 0 190.789c0 25.457 21.612 46.167 48.178 46.167h16.221l.648-4.244c4.906-32.088 32.06-55.398 64.612-55.512q.372.045.743.048"/>
+            </svg>
+        </a>
+        <h1>SkyNest</h1>
+        <p class="caption">
+            Log in
+        </p>
+        {% if error|default %}
+        <div class="error-message">{{ error.message }}</div>
+        {% endif %}
+        <form method="post" action="/login">
+            <input class="input{% if 'user_name' in error.fields %} error{% endif %}"{% if user_name|default %} value="{{ user_name }}"{% endif %} type="text" name="user_name" placeholder="Username" required/>
+            <div class="password-container">
+                <input class="input password-input{% if 'password' in error.fields %} error{% endif %}"{% if password|default %} value="{{ password }}"{% endif %} type="password" name="password" placeholder="Password" id="password" required/>
+                <div class="toggle-icon" id="toggle-password">
+                    <svg id="eye-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0" fill="var(--button-hover)"/>
+                    <path d="M21.894 11.553C19.736 7.236 15.904 5 12 5s-7.736 2.236-9.894 6.553a1 1 0 0 0 0 .894C4.264 16.764 8.096 19 12 19s7.736-2.236 9.894-6.553a1 1 0 0 0 0-.894M12 17c-2.969 0-6.002-1.62-7.87-5C5.998 8.62 9.03 7 12 7s6.002 1.62 7.87 5c-1.868 3.38-4.901 5-7.87 5" fill="var(--button-hover)"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="powbox" {% if required_language|default %}data-language="{{ required_language }}"{% endif %} data-challenge="{{ powbox_challenge }}"></div>
+            <button type="submit">Next</button>
+            <input type="hidden" name="powbox_state" value="{{ powbox_state }}">
+        </form>
+        {% if creator|default %}
+        <p class="creator">Created by: {{ creator }}</p>
+        {% endif %}
+        <noscript>
+            <style>
+                .toggle-icon {
+                    display: none;
+                }
+            </style>
+        </noscript>
+        <script>document.addEventListener("DOMContentLoaded",(()=>{const t=document.getElementById("password"),e=document.getElementById("toggle-password"),o=document.getElementById("eye-icon");let n=!1;e.addEventListener("click",(()=>{n=!n,t.type=n?"text":"password",o.innerHTML=n?'<path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0" fill="var(--button-hover)"/><path d="M21.894 11.553C19.736 7.236 15.904 5 12 5s-7.736 2.236-9.894 6.553a1 1 0 0 0 0 .894C4.264 16.764 8.096 19 12 19s7.736-2.236 9.894-6.553a1 1 0 0 0 0-.894M12 17c-2.969 0-6.002-1.62-7.87-5C5.998 8.62 9.03 7 12 7s6.002 1.62 7.87 5c-1.868 3.38-4.901 5-7.87 5" fill="var(--button-hover)"/><path d="M4 4l16 16"stroke="var(--button-hover)"stroke-linecap="round"stroke-width="2"/>':'<path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0" fill="var(--button-hover)"/><path d="M21.894 11.553C19.736 7.236 15.904 5 12 5s-7.736 2.236-9.894 6.553a1 1 0 0 0 0 .894C4.264 16.764 8.096 19 12 19s7.736-2.236 9.894-6.553a1 1 0 0 0 0-.894M12 17c-2.969 0-6.002-1.62-7.87-5C5.998 8.62 9.03 7 12 7s6.002 1.62 7.87 5c-1.868 3.38-4.901 5-7.87 5" fill="var(--button-hover)"/>'}))}));</script>
+        <script>const translations={"I'm not a robot.":{en:"I'm not a robot.",es:"No soy robot.","zh-cn":"我不是机器人。",hi:"मैं रोबोट नहीं हूँ।",ar:"أنا لست روبوت.",fr:"Je ne suis pas robot.",ru:"Я не робот.",pt:"Não sou robô.",de:"Ich bin kein Bot.",ja:"私はロボットではありません。",bn:"আমি রোবট নই।",pa:"ਮੈਂ ਰੋਬੋਟ ਨਹੀਂ ਹਾਂ।",ko:"나는 로봇이 아니다.",it:"Non sono robot.",vi:"Tôi không phải robot.","zh-tw":"我不是機器人。",te:"నేను రోబోట్ కాదు.",mr:"मी रोबोट नाही.",ta:"நான் ரோபோட் இல்லை.",ur:"میں روبوٹ نہیں ہوں۔",tr:"Ben robot değilim.",th:"ฉันไม่ใช่หุ่นยนต์.",gu:"હું રોબોટ નથી.",fa:"من ربات نیستم.",pl:"Nie jestem robotem.",uk:"Я не робот.",ro:"Nu sunt robot.",nl:"Ik ben geen robot.",hu:"Nem vagyok robot.",el:"Δεν είμαι ρομπότ.",cs:"Nejsem robot.",sv:"Jag är inte robot.",he:"אני לא רובוט.",da:"Jeg er ikke robot.",fi:"En ole robotti.",no:"Jeg er ikke robot.",sk:"Nie som robot.",hr:"Ja nisam robot.",ms:"Bukan robot.",id:"Bukan robot.",sr:"Ja nisam robot.",lt:"Aš nesu robotas.",sl:"Nisem robot.",et:"Ma ei ole robot.",lv:"Es neesmu robots.",sw:"Mimi si roboti.",bg:"Аз не съм робот.",ka:"მე არ ვარ რობოტი.",az:"Mən robot deyiləm.",kk:"Мен робот емеспін.",uz:"Men robot emasman.",hy:"Ես robot չեմ.",sq:"Nuk jam robot.",my:"မနောကရိုဘော့ မဟုတ်ပါ။",km:"ខ្ញុំមិនមែនជាឧបករណ៍រ៉ូបូតទេ។",mk:"Не сум робот.",am:"እኔ ሮቦት አይደለሁም።",ne:"मै रोबोट होइन।",lo:"ຂອງຫົວແບບບໍ່ປະກອບກັບປັກສຸກຕຳຄຳ",si:"මට රොබෝට් නොවේ.",sd:"مان روبوٽ ناهي.",ug:"مەن روبوت ئەمەس.",mn:"Би робот биш.",ky:"Мен робот эмесмин.",ps:"زه روبوټ نه یم.",ku:"Ez robot nînim.",gl:"Non son robot.",mt:"Jien mhux robot.",so:"Anigu robot ma ihi.",gd:"Chan e robot.",cy:"Nid wyf yn robot.",lb:"Ech sinn kee Roboter.",yi:"איך בין נישט רובאָט.",ha:"Ni ba mutum-mutumi ba ne.",haw:"ʻAʻole wau he robota.",mg:"Tsy robot aho.",yo:"Emi kii roboti.",ny:"Sindine loboti.",ceb:"Dili robot.",co:"Ùn sò micca robot.",fy:"Ik bin gjin robot.",ig:"Abụghị m onye robot.",is:"Ég er ekki vélmenni.",jw:"Aku dudu robot.",la:"Robot non sum.",mi:"Ehara ahau i te karetao.",su:"Abdi sané robot.",tg:"Ман робот нестам.",tl:"Hindi ako robot.",xh:"Andiyorobhothi.",zu:"Angilona irobhothi.",af:"Ek is nie robot nie.",eu:"Ez naiz robot bat.",be:"Я не робот.",bs:"Ja nisam robot.",ca:"No sóc robot.",eo:"Mi ne estas roboto.",ht:"Mwen pa robo.",iw:"אני לא רובוט.",hmn:"Kuv tsis yog neeg hlau.",ga:"Ní robot mé.",kn:"ನಾನು ರೋಬೋಟ್ ಅಲ್ಲ.",ml:"ഞാൻ റോബോട്ടല്ല.",or:"ମୁଁ ରୋବୋଟ ନୁହେଁ।",sm:"E le o aʻu o se robot.",st:"Ha ke roboto.",sn:"Ini handisi robhoti."},"Verifying ...":{en:"Verifying ...",es:"Verificando ...","zh-cn":"正在验证...",hi:"सत्यापन हो रहा है ...",ar:"جارٍ التحقق ...",fr:"Vérification ...",ru:"Проверка ...",pt:"Verificando ...",de:"Überprüfung ...",ja:"確認中 ...",bn:"যাচাই করা হচ্ছে ...",pa:"ਪ੍ਰਮਾਣਿਤ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ ...",ko:"검증 중 ...",it:"Verifica in corso ...",vi:"Đang xác minh ...","zh-tw":"正在驗證...",te:"ధృవీకరించబడుతోంది ...",mr:"सत्यापन सुरू आहे ...",ta:"சரிபார்க்கப்படுகிறது ...",ur:"تصدیق کی جا رہی ہے ...",tr:"Doğrulanıyor ...",th:"กำลังตรวจสอบ ...",gu:"ચકાસણી થઈ રહી છે ...",fa:"در حال بررسی ...",pl:"Weryfikacja ...",uk:"Перевірка ...",ro:"Verificare ...",nl:"Bezig met verifiëren ...",hu:"Ellenőrzés folyamatban ...",el:"Επαλήθευση ...",cs:"Ověřování ...",sv:"Verifierar ...",he:"מאמת ...",da:"Bekræfter ...",fi:"Varmistetaan ...",no:"Verifiserer ...",sk:"Overovanie ...",hr:"Provjera ...",ms:"Sedang mengesahkan ...",id:"Memverifikasi ...",sr:"Провера ...",lt:"Tikrinama ...",sl:"Preverjanje ...",et:"Kontrollimine ...",lv:"Verificēšana ...",sw:"Inathibitisha ...",bg:"Проверява се ...",ka:"ვერიფიცირება ...",az:"Yoxlanılır ...",kk:"Тексерілуде ...",uz:"Tekshirilmoqda ...",hy:"Ստուգվում է ...",sq:"Duke verifikuar ...",my:"အတည်ပြုနေသည် ...",km:"កំពុងផ្ទៀងផ្ទាត់ ...",mk:"Се верификува ...",am:"ተረጋግጦ ነው ...",ne:"जाँच हुँदैछ ...",lo:"ກຳລັງກວດສອບ ...",si:"තහවුරු කරමින් පවතී ...",sd:"تصديق ٿي رهيو آهي ...",ug:"تەستىقلىنىۋاتىدۇ ...",mn:"Шалгаж байна ...",ky:"Текшерүүдө ...",ps:"کره کول روان دي ...",ku:"دیەردەکردنەوە ...",gl:"Verificando ...",mt:"Qiegħed tivverifika ...",so:"Waxaa la xaqiijinayaa ...",gd:"A' dearbhadh ...",cy:"Gwirio ...",lb:"Verifizéieren ...",yi:"פעריפֿיִירן ...",ha:"Ana tantancewa ...",haw:"Ke hōʻoia nei ...",mg:"Manamarina ...",yo:"Nwọn ń ṣayẹwo ...",ny:"Ikuchitika kuyesedwa ...",ceb:"Gisusi ...",co:"Verificà ...",fy:"Kontrolearje ...",ig:"Na-anwale ...",is:"Staðfestir ...",jw:"Ndiverifikasi ...",la:"Verificatio ...",mi:"E whakamana ana ...",su:"Sedang diverifikasi ...",tg:"Тасдиқ мешавад ...",tl:"Sinusuri ...",xh:"Ukuqinisekisa ...",zu:"Ukuhlola ...",af:"Verifieer ...",eu:"Egiaztatzen ...",be:"Праверка ...",bs:"Provjera ...",ca:"Verificant ...",eo:"Kontrolado ...",ht:"Verifye ...",iw:"מאמת ...",hmn:"Xyuas ...",ga:"Ag fíorú ...",kn:"ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ ...",ml:"പരിശോധിക്കുന്നു ...",or:"ସତ୍ୟପାୟନ ହେଉଛି ...",sm:"Fa'amaonia ...",st:"E hlahlobisoa ...",sn:"Kusimbiswa ...",yo:"Nwọn ń ṣayẹwo ..."},"Success!":{en:"Success!",es:"¡Éxito!","zh-cn":"成功！",hi:"सफलता!",ar:"نجاح!",fr:"Succès!",ru:"Успех!",pt:"Sucesso!",de:"Erfolg!",ja:"成功！",bn:"সফলতা!",pa:"ਸਫਲਤਾ!",ko:"성공!",it:"Successo!",vi:"Thành công!","zh-tw":"成功！",te:"విజయం!",mr:"यश!",ta:"வெற்றி!",ur:"کامیابی!",tr:"Başarı!",th:"ความสำเร็จ!",gu:"સફળતા!",fa:"موفقیت!",pl:"Sukces!",uk:"Успіх!",ro:"Succes!",nl:"Succes!",hu:"Siker!",el:"Επιτυχία!",cs:"Úspěch!",sv:"Framgång!",he:"הצלחה!",da:"Succes!",fi:"Onnistui!",no:"Suksess!",sk:"Úspech!",hr:"Uspjeh!",ms:"Kejayaan!",id:"Berhasil!",sr:"Успех!",lt:"Sėkmė!",sl:"Uspeh!",et:"Edu!",lv:"Veiksme!",sw:"Mafanikio!",bg:"Успех!",ka:"წარმატება!",az:"Uğur!",kk:"Сәттілік!",uz:"Muvaffaqiyat!",hy:"Հաջողություն!",sq:"Sukses!",my:"အောင်မြင်မှု!",km:"ជោគជ័យ!",mk:"Успех!",am:"ስኬት!",ne:"सफलता!",lo:"ຄວາມສໍາເລັດ!",si:"සාර්ථකත්වය!",sd:"ڪاميابي!",ug:"مۇۋەپپەقىيەت!",mn:"Амжилт!",ky:"Ийгилик!",ps:"بریا!",ku:"سەرکەوتن!",gl:"Éxito!",mt:"Suċċess!",so:"Guul!",gd:"Soirbheachas!",cy:"Llwyddiant!",lb:"Succès!",yi:"הצלחה!",ha:"Nasara!",haw:"Holomua!",mg:"Fahombiazana!",yo:"Aṣeyọri!",ny:"Kupambana!",ceb:"Kalampusan!",co:"Successu!",fy:"Súkses!",ig:"Ọganiihu!",is:"Árangur!",jw:"Kasuksesan!",la:"Successus!",mi:"Angitu!",su:"Kasuksésan!",tg:"Муваффақият!",tl:"Tagumpay!",xh:"Impumelelo!",zu:"Impumelelo!",af:"Sukses!",eu:"Arrakasta!",be:"Поспех!",bs:"Uspjeh!",ca:"Èxit!",eo:"Sukceso!",ht:"Siksè!",iw:"הצלחה!",hmn:"Zoo heev!",ga:"Rath!",kn:"ಯಶಸ್ಸು!",ml:"വിജയം!",or:"ସଫଳତା!",sm:"Manuia!",st:"Katleho!",sn:"Kubudirira!",yo:"Aṣeyọri!"},'Source code on <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>':{en:'Source code on <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',es:'Código fuente en <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',"zh-cn":'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> 上的源代码',hi:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> पर स्रोत कोड',ar:'شفرة المصدر على <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',fr:'Code source sur <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',ru:'Исходный код на <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>.',pt:'Código-fonte no <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',de:'Quellcode auf <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',ja:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> のソース コード',bn:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>-এ সোর্স কোড',pa:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> \'ਤੇ ਸਰੋਤ ਕੋਡ',ko:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>의 소스 코드',it:'Codice sorgente su <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',vi:'Mã nguồn trên <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',"zh-tw":'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> 上的原始碼',te:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>లో సోర్స్ కోడ్',mr:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> वर स्रोत कोड',ta:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> இல் மூலக் குறியீடு',ur:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> پر ماخذ کوڈ',tr:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>\'daki kaynak kodu',th:'ซอร์สโค้ดบน <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',gu:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> પરનો સ્રોત કોડ',fa:'کد منبع در <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',pl:'Kod źródłowy w <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',uk:'Вихідний код на <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',ro:'Cod sursă pe <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',nl:'Broncode op <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',hu:'Forráskód a <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHubon</a>',el:'Πηγαίος κώδικας στο <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',cs:'Zdrojový kód na <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHubu</a>',sv:'Källkod på <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',he:'קוד המקור ב-<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',da:'Kildekode på <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',fi:'Lähdekoodi <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHubissa</a>',no:'Kildekode på <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',sk:'Zdrojový kód na <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',hr:'Izvorni kod na <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',ms:'Kod sumber pada <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',id:'Kode sumber di <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',sr:'Изворни код на <а хреф="хттпс://гитхуб.цом/тн3в/ТруеЦлицк" таргет="_бланк" нтр="1">ГитХуб</а>',lt:'Šaltinio kodas <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',sl:'Izvorna koda na <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',et:'Lähtekood saidil <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',lv:'Avota kods vietnē <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',sw:'Msimbo wa chanzo kwenye <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',bg:'Изходен код в <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',ka:'წყაროს კოდი <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>-ზე',az:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>-da mənbə kodu',kk:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> сайтындағы бастапқы код',uz:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> da manba kodi',hy:'Աղբյուրի կոդը <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>-ում',sq:'Kodi burimor në <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',my:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> ရှိ အရင်းအမြစ်ကုဒ်',km:'កូដប្រភពនៅលើ <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',mk:'Изворниот код на <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',am:'የምንጭ ኮድ በ<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> ላይ',ne:'स्रोत कोड <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> मा',lo:'ລະຫັດແຫຼ່ງໃນ <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',si:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> හි මූලාශ්‍ර කේතය',sd:'ماخذ ڪوڊ <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> تي',ug:'<a href="https://github.com/tn3w/TrueClick" target="_blank"> GitHub </a> دىكى ئەسلى كود',mn:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> дээрх эх код',ky:'Булак коду <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',ps:'د سرچینې کوډ په <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',ku:'Koda çavkaniyê li ser <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',gl:'Código fonte en <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',mt:'Kodiċi tas-sors fuq <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',so:'Koodhka isha ee <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',gd:'Còd an tùs air <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',cy:'Cod ffynhonnell ar <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',lb:'Quellcode op <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',yi:'מקור קאָד אויף <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',ha:'Lambar tushe akan <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',haw:'Kumu kumu ma <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',mg:'Kaody loharano ao amin\'ny <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',yo:'Koodu orisun lori <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',ny:'Khodi yochokera pa <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',ceb:'Source code sa <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',co:'U codice fonte nantu à <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',fy:'Boarnekoade op <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',ig:'Koodu isi mmalite na <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',is:'Frumkóði á <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',jw:'Kode sumber ing <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',la:'Source code on <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',mi:'Waehere puna kei runga <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',su:'Kode sumber dina <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',tg:'Рамзи манбаъ дар <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',tl:'Source code sa <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',xh:'Ikhowudi yomthombo <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',zu:'Ikhodi yomthombo <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',af:'Bronkode op <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',eu:'Iturburu kodea <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>-n',be:'Зыходны код на <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',bs:'Izvorni kod na <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHubu</a>',ca:'Codi font a <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',eo:'Fontkodo sur <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',ht:'Kòd sous sou <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',iw:'קוד המקור ב-<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',hmn:'Qhov chaws ntawm <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',ga:'Cód foinse ar <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',kn:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a> ನಲ್ಲಿ ಮೂಲ ಕೋಡ್',ml:'<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>-ലെ ഉറവിട കോഡ്',or:'<a href="https://github.com/tn3w/TrueClick" target="_blank"> GitHub </a> ରେ ଉତ୍ସ କୋଡ୍ |',sm:'Fa\'ailoga puna ile <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',st:'Mohloli oa khoutu ho <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',sn:'Kwakabva pa<a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>'}},LANGUAGES_3_TO_2={afr:"af",alb:"sq",amh:"am",ara:"ar",arm:"hy",aze:"az",eus:"eu",bel:"be",ben:"bn",bos:"bs",bul:"bg",cat:"ca",ceb:"ceb",chi:"zh-cn",cht:"zh-tw",cor:"co",hrv:"hr",cze:"cs",dan:"da",dut:"nl",eng:"en",epo:"eo",est:"et",fil:"tl",fin:"fi",fre:"fr",fry:"fy",glg:"gl",geo:"ka",ger:"de",gre:"el",guj:"gu",hat:"ht",hau:"ha",haw:"haw",heb:"he",hin:"hi",hmn:"hmn",hun:"hu",ice:"is",ibo:"ig",ind:"id",gle:"ga",ita:"it",jpn:"ja",jav:"jw",kan:"kn",kaz:"kk",khm:"km",kor:"ko",kur:"ku",kir:"ky",lao:"lo",lat:"la",lav:"lv",lit:"lt",ltz:"lb",mac:"mk",mlg:"mg",may:"ms",mal:"ml",mlt:"mt",mao:"mi",mar:"mr",mon:"mn",mya:"my",nep:"ne",nor:"no",ori:"or",pus:"ps",per:"fa",pol:"pl",por:"pt",pan:"pa",rum:"ro",rus:"ru",smo:"sm",gla:"gd",srp:"sr",sot:"st",sna:"sn",snd:"sd",sin:"si",slo:"sk",slv:"sl",som:"so",spa:"es",sun:"su",swa:"sw",swe:"sv",tgk:"tg",tam:"ta",tel:"te",tha:"th",tur:"tr",tuk:"tk",ukr:"uk",urd:"ur",uig:"ug",uzb:"uz",vie:"vi",wel:"cy",xho:"xh",yid:"yi",yor:"yo",zul:"zu"},VALID_LANGUAGES=["af","sq","am","ar","hy","az","eu","be","bn","bs","bg","ca","ceb","zh-cn","zh-tw","co","hr","cs","da","nl","en","eo","et","tl","fi","fr","fy","gl","ka","de","el","gu","ht","ha","haw","he","hi","hmn","hu","is","ig","id","ga","it","ja","jw","kn","kk","km","ko","ku","ky","lo","la","lv","lt","lb","mk","mg","ms","ml","mt","mi","mr","mn","my","ne","no","or","ps","fa","pl","pt","pa","ro","ru","sm","gd","sr","st","sn","sd","si","sk","sl","so","es","su","sw","sv","tg","ta","te","th","tr","tk","uk","ur","ug","uz","vi","cy","xh","yi","yo","zu"],cssColorStyleLight=":root{--powbox-background:#f7f9fc;--powbox-text:#333333;--powbox-border:#d1d5db;--powbox-shadow:#ccc;--powbox-link:#888}",cssColorStyleDark=":root{--powbox-background:#1a1a1a;--powbox-text:#f2f2f2;--powbox-border:#4a4a4a;--powbox-shadow:#2e2e2e;--powbox-link:#999}",cssColorStyle=":root{--powbox-background:#f7f9fc;--powbox-text:#333333;--powbox-border:#d1d5db;--powbox-shadow:#ccc;--powbox-link:#888}@media (prefers-color-scheme:dark){:root{--powbox-background:#1a1a1a;--powbox-text:#f2f2f2;--powbox-border:#4a4a4a;--powbox-shadow:#2e2e2e;--powbox-link:#999}}",cssStyle='.powbox{background-color:var(--powbox-background);color:var(--powbox-text);border:1px solid var(--powbox-border);font-family:Arial,sans-serif;font-size:.9rem;border-radius:8px;max-width:350px;padding:10px}.powbox .error{display:none;color:red}.powbox-content{text-align:center;display:flex;box-sizing:border-box;align-items:center;justify-content:space-between}.powbox-content svg{display:none;fill:var(--powbox-text);animation:rotate 1s linear infinite;width:20px;height:20px;margin:0 5px}.powbox-content input[type="checkbox"]{width:20px;height:20px;cursor:pointer;accent-color:var(--powbox-background);border:1px solid var(--powbox-border);background-color:var(--powbox-background);appearance:none;margin:0 5px}.powbox-content input[type="checkbox"]:hover{border-color:var(--powbox-link)}.powbox-content input[type="checkbox"]:checked{border-color:var(--powbox-shadow);appearance:auto}.powbox-content p{flex:1;margin-left:5px;display:flex;justify-content:flex-start;align-items:center}.powbox-content .logo-container{flex:1;display:flex;flex-direction:column;align-items:flex-end}.powbox-content .logo-container span{display:flex;align-items:center;justify-content:flex-end;height:30px;margin-left:10px;font-size:20px}.powbox-content .logo-container p{font-size:12px;color:var(--powbox-link);text-align:center;width:max-content;margin:0;font-family:sans-serif}.powbox-content .logo-container a{margin-left:2.5px;color:var(--powbox-link);text-decoration:none}.powbox-content .logo-container a:hover{text-decoration:underline}@keyframes rotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@media (max-width:350px){.powbox-content p{font-size:12px}}',htmlContent='<span class="error"></span><div class="powbox-content"><svg viewBox="0 0 1024 1024"xmlns="http://www.w3.org/2000/svg"><path d="M512 1024c-69.1 0-136.2-13.5-199.3-40.2C251.7 958 197 921 150 874c-47-47-84-101.7-109.8-162.7C13.5 648.2 0 581.1 0 512c0-19.9 16.1-36 36-36s36 16.1 36 36c0 59.4 11.6 117 34.6 171.3 22.2 52.4 53.9 99.5 94.3 139.9 40.4 40.4 87.5 72.2 139.9 94.3C395 940.4 452.6 952 512 952c59.4 0 117-11.6 171.3-34.6 52.4-22.2 99.5-53.9 139.9-94.3 40.4-40.4 72.2-87.5 94.3-139.9C940.4 629 952 571.4 952 512c0-59.4-11.6-117-34.6-171.3a440.45 440.45 0 0 0-94.3-139.9 437.71 437.71 0 0 0-139.9-94.3C629 83.6 571.4 72 512 72c-19.9 0-36-16.1-36-36s16.1-36 36-36c69.1 0 136.2 13.5 199.3 40.2C772.3 66 827 103 874 150c47 47 83.9 101.8 109.7 162.7 26.7 63.1 40.2 130.2 40.2 199.3s-13.5 136.2-40.2 199.3C958 772.3 921 827 874 874c-47 47-101.8 83.9-162.7 109.7-63.1 26.8-130.2 40.3-199.3 40.3z"/></svg> <input type="checkbox"><p>ROBOT<div class="logo-container"><span>𝑷𝒐𝑾𝑩𝒐𝒙</span><p>FOOTER</div></div>';function translate(t,e){return translations[t][e]}function getLanguageCode(t){if(2===t.length&&VALID_LANGUAGES.includes(t))return t;if(3===t.length&&LANGUAGES_3_TO_2[t]){const e=LANGUAGES_3_TO_2[t];if(VALID_LANGUAGES.includes(e))return e}return"en"}function getNearestLanguage(){return getLanguageCode(navigator.language.split("-")[0])}function addStyles(t){var e=Array.from(document.querySelectorAll("head style")).find((t=>!t.classList.contains("darkreader")))||document.createElement("style");return e.styleSheet?e.styleSheet.cssText+=t:e.appendChild(document.createTextNode(t)),e.parentNode||document.head.appendChild(e),e}function removeStyles(t){document.querySelectorAll("style").forEach((e=>{let a="";a=e.styleSheet?e.styleSheet.cssText:e.textContent,a.includes(t)&&(a=a.replace(t,""),e.styleSheet?e.styleSheet.cssText=a:e.textContent=a,""===a.trim()&&e.remove())}))}function showError(t,e){t.getElementsByClassName("error")[0].innerHTML=e,t.getElementsByClassName("error")[0].style.display="block"}function hideError(t){t.getElementsByClassName("error")[0].style.display="none"}class ProofOfWorkClient{constructor(t=navigator.hardwareConcurrency||4){this.workerCount=t,this.workers=[],this.currentSolutions=new Map}startWorkers(t,e,a){if(this.currentSolutions.has(t))return void console.warn(`Task with string "${t}" is already being solved.`);const r="0".repeat(e);let o=!1;this.workers=Array.from({length:this.workerCount},((e,i)=>{const n=new Worker(URL.createObjectURL(new Blob(['const calculateHash=async t=>{const a=(new TextEncoder).encode(t),e=await crypto.subtle.digest("SHA-256",a);return Array.from(new Uint8Array(e)).map((t=>t.toString(16).padStart(2,"0"))).join("")};self.onmessage=async function(t){const{salt:a,prefix:e,start:s,step:r,batchSize:n}=t.data;let o=s;for(;;)for(let t=0;t<n;t++){if((await calculateHash(a+o)).startsWith(e))return void self.postMessage(o);o+=r}};'])));n.onmessage=e=>{if(!o){o=!0,this.workers.forEach((t=>t.terminate()));const r=e.data;this.currentSolutions.set(t,r);const i=document.createElement("input");i.type="hidden",i.name="powbox_solution",i.value=r,a.appendChild(i)}};return n.postMessage({salt:t,prefix:r,start:i,step:this.workerCount,batchSize:1e3}),n}))}getSolution(t){return this.currentSolutions.get(t)||null}}document.addEventListener("DOMContentLoaded",(function(){const t=[...document.querySelectorAll("style")].some((t=>t.classList.contains("darkreader"))),e=document.getElementsByClassName("powbox");if(e.length>0){addStyles(cssStyle);let a=e[0],r=a.getAttribute("data-theme");null==r&&(t?r="dark":a.classList.contains("light")?r="light":a.classList.contains("dark")&&(r="dark")),addStyles("light"===r?cssColorStyleLight:"dark"===r?cssColorStyleDark:cssColorStyle)}const a=new ProofOfWorkClient;async function r(t){var e;if(!a.getSolution(t))return new Promise((e=>{const r=()=>{const o=a.getSolution(t);o?e(o):setTimeout(r,500)};r()}));await(e=2e3,new Promise((t=>setTimeout(t,e))))}for(var o=0;o<e.length;o++){let t=e[o],i=t.getAttribute("data-lang");null==i&&(i=t.getAttribute("data-language"),null==i&&(i=getNearestLanguage()));let n=htmlContent.replaceAll("FOOTER",translate('Source code on <a href="https://github.com/tn3w/TrueClick" target="_blank">GitHub</a>',i));n=n.replaceAll("ROBOT",translate("I'm not a robot.",i)),t.innerHTML=n;let u=t.getAttribute("data-challenge"),s=t.getAttribute("data-difficulty"),l=t.getAttribute("data-callback");if(null==u)return void showError(t,"No challenge was given! Reload the page.");let h=Number(s);(isNaN(h)||null==s||""===s)&&(h=5);let b=t.closest("form")||document.forms[0];a.startWorkers(u,h,b);let c=t.querySelector('input[type="checkbox"]');c&&(c.required=!0);let k=t.querySelector("svg"),g=t.querySelector("p");c.addEventListener("change",(async function(){var t;this.checked&&(this.checked=!1,c.style.display="none",k.style.display="block",g.innerText=translate("Verifying ...",i),await r(u),null!=l&&(t=l,"function"==typeof window[t]&&window[t]()),c.style.display="unset",k.style.display="none",g.innerText=translate("Success!",i)),this.checked=!0}))}}));</script>
+    </body>
+</html>

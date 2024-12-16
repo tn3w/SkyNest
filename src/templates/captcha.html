@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="{{ language }}">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Beep boop? | SkyNest</title>
+        <style>
+            :root {
+                --background: #f7f9fc;
+                --text: #333333;
+                --button-background: #d1d5db;
+                --button-hover: #b0b3b8;
+                --highlight-blue: #007bff;
+                --second-highlight-blue: #66b2ff;
+                {% if error|default %}
+                --error: #ff6c6c;
+                --second-error: #ff3f3f;
+                {% endif %}
+            }
+
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --background: #1a1a1a;
+                    --text: #f2f2f2;
+                    --button-background: #4a4a4a;
+                    --button-hover: #6a6a6a;
+                    --highlight-blue: #66b2ff;
+                    --second-highlight-blue: #007bff;
+                    {% if error|default %}
+                    --error: #ff3f3f;
+                    --second-error: #ff6c6c;
+                    {% endif %}
+                }
+            }
+
+            * {
+                margin: 0;
+                font-family: Arial, sans-serif;
+                color: var(--text);
+                text-align: center;
+            }
+
+            body {
+                background-color: var(--background);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+            }
+
+            svg {
+                width: 100px;
+                height: 100px;
+            }
+
+            h1 {
+                font-size: 2.5em;
+                margin-bottom: 0.2em;
+            }
+
+            p {
+                margin-bottom: 1.5em;
+                padding: 0 50px;
+            }
+
+            .image-grid {
+                display: grid;
+                grid-template-columns: repeat(6, 1fr);
+                grid-gap: 10px;
+            }
+
+            .grid-image {
+                width: 100px;
+                height: 100px;
+                border-radius: 5px;
+                box-shadow: 2px 2px 5px var(--border);
+            }
+
+            @media only screen and (max-width: 670px) {
+                .image-grid {
+                    grid-template-columns: repeat(3, 1fr);
+                }
+            }
+
+            @media only screen and (max-width: 400px) {
+                .image-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+            {% if creator|default %}
+
+            .creator {
+                margin-top: 3rem;
+                font-size: 0.7em;
+            }
+            {% endif %}
+            {% if error|default %}
+
+            .error-message {
+                background-color: var(--error);
+                padding: 0.75em;
+                border-radius: 12px;
+                font-size: 1em;
+                margin-bottom: 1em;
+                max-width: 600px;
+                text-align: center;
+            }
+            {% endif %}
+        </style>
+    </head>
+    <body>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <defs>
+                <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color: var(--highlight-blue); stop-opacity: 1"/>
+                    <stop offset="100%" style="stop-color: var(--second-highlight-blue); stop-opacity: 1"/>
+                </linearGradient>
+            </defs>
+            <path fill="url(#blueGradient)" d="M21.928 11.607c-.202-.488-.635-.605-.928-.633V8c0-1.103-.897-2-2-2h-6V4.61c.305-.274.5-.668.5-1.11a1.5 1.5 0 0 0-3 0c0 .442.195.836.5 1.11V6H5c-1.103 0-2 .897-2 2v2.997l-.082.006A1 1 0 0 0 1.99 12v2a1 1 0 0 0 1 1H3v5c0 1.103.897 2 2 2h14c1.103 0 2-.897 2-2v-5a1 1 0 0 0 1-1v-1.938a1 1 0 0 0-.072-.455M5 20V8h14l.001 3.996L19 12v2l.001.005.001 5.995z"/><ellipse fill="url(#blueGradient)" cx="8.5" cy="12" rx="1.5" ry="2"/><ellipse fill="url(#blueGradient)" cx="15.5" cy="12" rx="1.5" ry="2"/><path fill="url(#blueGradient)" d="M8 16h8v2H8z"/>
+        </svg>
+        <h1>Beep boop?</h1>
+        <p>Confirm you are human by clicking the picture of the&nbsp;<b>smiling dog</b>.</p>
+        {% if error|default %}
+        <div class="error-message">{{ error.message }}</div>
+        {% endif %}
+        <div class="image-grid">
+            {% for image in images %}
+            <a href="/login?state={{ state }}&i={{ loop.index0 }}"><img src="{{ image }}" alt="Image {{ loop.index0 }}" class="grid-image"></a>
+            {% endfor %}
+        </div>
+        {% if creator|default %}
+        <p class="creator">Created by: {{ creator }}</p>
+        {% endif %}
+    </body>
+</html>

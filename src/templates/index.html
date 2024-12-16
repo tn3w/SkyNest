@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Feel the vibe! | SkyNest</title>
+        <style>
+            :root {
+                --background: #f7f9fc;
+                --text: #333333;
+                --button-background: #d1d5db;
+                --button-hover: #b0b3b8;
+                --highlight-blue: #007bff;
+                --second-highlight-blue: #66b2ff;
+            }
+
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --background: #1a1a1a;
+                    --text: #f2f2f2;
+                    --button-background: #4a4a4a;
+                    --button-hover: #6a6a6a;
+                    --highlight-blue: #66b2ff;
+                    --second-highlight-blue: #007bff;
+                }
+            }
+
+            * {
+                margin: 0;
+                font-family: Arial, sans-serif;
+                color: var(--text);
+                text-align: center;
+            }
+
+            body {
+                background-color: var(--background);
+                display: flex;
+                height: 100%;
+            }
+
+            .sidebar {
+                width: 25%;
+                border-right: 1px solid var(--button-hover);
+                padding: 10px;
+                max-width: 150px;
+            }
+
+            svg {
+                height: 50px;
+                width: 50px;
+            }
+
+            .buttons {
+                display: flex;
+                flex-direction: column;
+                margin-top: 40px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="sidebar">
+            <a href="/">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 376.22 376.22" xml:space="preserve">
+                    <defs>
+                        <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color: var(--highlight-blue); stop-opacity: 1"/>
+                            <stop offset="100%" style="stop-color: var(--second-highlight-blue); stop-opacity: 1"/>
+                        </linearGradient>
+                    </defs>
+                    <path fill="url(#blueGradient)" d="M338.103 201.978a68.3 68.3 0 0 0 2.61-18.756c0-37.746-30.708-68.455-68.454-68.455-15.702 0-31.042 5.453-43.193 15.354-10.807 8.805-18.705 20.773-22.558 34.057-25.26-2.36-48.097 13.667-55.234 37.059a52.6 52.6 0 0 0-11.671-1.309c-29.051 0-52.686 23.464-52.686 52.514s23.635 52.515 52.686 52.515h183.931c29.051 0 52.685-23.464 52.685-52.515.001-23.766-15.729-44.075-38.116-50.464m-207.701-24.73 2.936.016 1.444-2.556c10.411-18.427 29.165-30.778 50.168-33.04l2.788-.3 1.197-2.535a82 82 0 0 1 3.334-6.313l2.045-3.498-2.998-2.725c-8.986-8.17-20.753-12.669-33.131-12.669-1.311 0-2.637.054-3.968.162-7.85-24.892-32.261-42.525-59.755-42.525-34.414 0-62.412 26.82-62.412 59.787 0 5.289.718 10.5 2.141 15.555C14.072 152.409 0 170.187 0 190.789c0 25.457 21.612 46.167 48.178 46.167h16.221l.648-4.244c4.906-32.088 32.06-55.398 64.612-55.512q.372.045.743.048"/>
+                </svg>
+            </a>
+            <div class="buttons">
+                <a class="btn active"><img class="home" alt="Home Icon">Home</a>
+                <a class="btn"><img class="explore" alt="Explore Icon">Explore</a>
+                <a class="btn"><img class="inbox" alt="Inbox Icon">Inbox</a>
+            </div>
+        </div>
+    </body>
+</html>

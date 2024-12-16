@@ -1,0 +1,10 @@
+flask
+gunicorn
+
+jinja2
+cryptography
+qrcode
+
+numpy
+opencv-python-headless
+redis

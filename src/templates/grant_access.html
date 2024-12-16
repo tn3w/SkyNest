@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="{{ language }}">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Protected page</title>
+        <style>
+            :root {
+                --background: #f7f9fc;
+                --text: #333333;
+                --button-background: #d1d5db;
+                --button-hover: #b0b3b8;
+                --highlight-blue: #007bff;
+                {% if error|default %}
+                --error: #ff6c6c;
+                --second-error: #ff3f3f;
+                {% endif %}
+            }
+
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --background: #1a1a1a;
+                    --text: #f2f2f2;
+                    --button-background: #4a4a4a;
+                    --button-hover: #6a6a6a;
+                    --highlight-blue: #66b2ff;
+                    {% if error|default %}
+                    --error: #ff3f3f;
+                    --second-error: #ff6c6c;
+                    {% endif %}
+                }
+            }
+
+            * {
+                margin: 0;
+                font-family: Arial, sans-serif;
+                color: var(--text);
+                text-align: center;
+            }
+
+            body {
+                background-color: var(--background);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+            }
+
+            h1 {
+                font-size: 2.5em;
+                margin-bottom: 0.2em;
+            }
+
+            b {
+                color: var(--highlight-blue);
+            }
+
+            p {
+                font-size: 1.2em;
+                margin-bottom: 1em;
+                line-height: 1.5;
+                max-width: 800px;
+            }
+
+            .small {
+                font-size: 0.9em;
+                margin-top: 3em;
+            }
+
+            form {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            input {
+                padding: 0.8em;
+                background-color: var(--background);
+                border: 1px solid var(--button-background);
+                border-radius: 8px;
+                margin-bottom: 1em;
+                font-size: 1em;
+                width: 100%;
+                max-width: 300px;
+                box-sizing: border-box;
+                text-align: left;
+            }
+
+            button {
+                padding: 0.8em 1.5em;
+                background-color: var(--button-background);
+                color: var(--text);
+                border: none;
+                border-radius: 50px;
+                font-size: 1em;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+
+            button:hover {
+                background-color: var(--button-hover);
+            }
+            
+            @media (min-width: 768px) {
+                input {
+                    min-width: 400px;
+                }
+            }
+            {% if error|default %}
+            .error {
+                border-color: var(--error);
+            }
+
+            .error:focus {
+                border-color: var(--second-error);
+            }
+
+            .error-message {
+                background-color: var(--error);
+                padding: 0.75em;
+                border-radius: 12px;
+                font-size: 1em;
+                margin-bottom: 1em;
+                max-width: 600px;
+                text-align: center;
+            }
+            {% endif %}
+        </style>
+    </head>
+
+    <body>
+        <h1>Protected&nbsp;<b>Page</b></h1>
+        {% if error|default %}
+        <div class="error-message">{{ error.message }}</div>
+        {% endif %}
+        <p>
+            This page is protected. Please enter your access token to view the project.
+        </p>
+        <form method="post" action="">
+            <input{% if "access_token" in error.fields %} class="error"{% endif %} name="access_token" type="text" placeholder="Enter access token" required>
+            <button type="submit">Submit</button>
+        </form>
+        <p class="small">
+            To verify you long-term, the access token will be saved as a cookie.
+        </p>
+    </body>
+</html>
