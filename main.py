@@ -8,11 +8,12 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from src.access import verify_access
 from src.render import render_template
 from src.crypto import sha256_hash_text
+from src.utils import Error, text_response
 from src.ddos_mitigation import rate_limit
 from src.state import get_state, create_state
 from src.request import is_post, get_scheme, get_user_agent, get_ip_address
+from src.errors import WEB_ERROR_CODES, NOT_RIGHT_ERROR, UN_OR_PWD_NOT_RIGHT_ERROR
 from src.user import create_test_user, get_signin_error, create_session, verify_twofa
-from src.utils import Error, text_response
 from src.captcha import (
     generate_powbox_challenge, verify_pow_response, create_captcha,
     get_clicked_images, is_valid_captcha
@@ -32,17 +33,63 @@ LOGO: Final[str] = """
 
 
 ACCESS_TOKEN: Final[Optional[str]] = environ.get("ACCESS_TOKEN", None)
-
 ONE_YEAR_IN_SECONDS: Final[int] = 31536000
-NOT_RIGHT_ERROR: Final[Error] = Error("Das war nicht richtig.", [])
-UN_OR_PWD_NOT_RIGHT_ERROR: Final[Error] = Error(
-    "Dein Nutzername oder dein Passwort ist falsch.",
-    ["user_name", "password"]
-)
 
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
+
+
+########################
+#### Error Handlers ####
+########################
+
+
+def handle_exception(exception: Exception) -> str:
+    """
+    Handle exceptions and render an appropriate error response.
+
+    Args:
+        exception (Exception): The exception that was raised. This can be
+            any instance of the Exception class or its subclasses.
+
+    Returns:
+        str: A rendered HTML template containing the error information,
+            along with the HTTP status code associated with the error.
+    """
+
+    title = None
+    description = None
+
+    code = str(exception).split(' ', maxsplit=1)[0]
+    if hasattr(exception, 'code'):
+        code = exception.code
+        if code in WEB_ERROR_CODES:
+            title = WEB_ERROR_CODES[code]['title']
+            description = WEB_ERROR_CODES[code]['description']
+
+    elif isinstance(exception, Exception):
+        title = type(exception).__name__
+
+    if not code:
+        code = 400
+
+    if not description:
+        description = str(exception).replace(title, '').strip()
+
+    reveal = getattr(g, "browser_verified", False) and \
+        (ACCESS_TOKEN is None or getattr(g, "access_verified", False))
+
+    return render_template(
+        "exception", request, ["title", "description"],
+        code = code, title = title or "Unexpected Error",
+        description = description or "Something unexpected has happened.",
+        reveal = reveal
+    ), code
+
+
+for error_code in WEB_ERROR_CODES:
+    app.register_error_handler(error_code, handle_exception)
 
 
 ##############################
@@ -52,6 +99,16 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
 @app.before_request
 def checking_browser() -> Optional[Response]:
+    """
+    Check the browser's verification status before processing the request.
+
+    Returns:
+        Optional[Response]: If the browser is verified, returns None to
+            continue processing the request. If the browser fails verification,
+            returns a rendered template for rate limiting or a browser check
+            challenge, which will halt further request processing.
+    """
+
     ip_address = get_ip_address(request)
 
     hashed_ip_address = ""
@@ -61,18 +118,22 @@ def checking_browser() -> Optional[Response]:
     challenge_cookie = request.cookies.get("challenge")
     if challenge_cookie:
         state_name, state_data = get_state(challenge_cookie)
-        if state_name == "browser_checked":
-            if state_data.get("ip") == hashed_ip_address:
-                return
+        if state_name == "browser_checked" and \
+            state_data.get("ip") == hashed_ip_address:
+
+            g.browser_verified = True
+            return None
 
     if rate_limit(ip_address):
         return render_template("rate_limit", request)
 
     if verify_pow_response(request):
+        g.browser_verified = True
+
         cookies = getattr(g, "cookies", {})
         cookies["challenge"] = create_state("browser_checked", {"ip": hashed_ip_address})
         g.cookies = cookies
-        return
+        return None
 
     powbox_challenge, powbox_state = generate_powbox_challenge()
     return render_template(
@@ -83,6 +144,7 @@ def checking_browser() -> Optional[Response]:
 
 
 if ACCESS_TOKEN:
+    @app.before_request
     def verify_access_wrapper() -> Optional[Response]:
         """
         A wrapper function to verify access before processing each request.
@@ -98,8 +160,6 @@ if ACCESS_TOKEN:
             return None
 
         return verify_access(request, ACCESS_TOKEN)
-
-    app.before_request(verify_access_wrapper)
 
 
 @app.after_request

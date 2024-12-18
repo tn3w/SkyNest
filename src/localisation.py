@@ -10,9 +10,9 @@ from typing import Final, Optional
 from flask import Request
 
 try:
-    from src.utils import JSON, ASSETS_DIRECTORY_PATH, load_dotenv
+    from src.utils import JSON, ASSETS_DIRECTORY_PATH, Error, load_dotenv
 except (ModuleNotFoundError, ImportError):
-    from utils import JSON, ASSETS_DIRECTORY_PATH, load_dotenv
+    from utils import JSON, ASSETS_DIRECTORY_PATH, Error, load_dotenv
 
 
 TRANSLATIONS_FILE_PATH: Final[str] = path.join(ASSETS_DIRECTORY_PATH, "translations.json")
@@ -61,15 +61,43 @@ def get_language(request: Request, default: str = "en") -> str:
     return default
 
 
+def translate_text(text: str, language: str) -> Optional[str]:
+    """
+    Translates the given text into the specified language.
+
+    Args:
+        text (str): The text to be translated.
+        language (str): The target language code for the translation.
+
+    Returns:
+        Optional[str]: The translated text if available, otherwise None. 
+            If the language is 'en', the original text is returned.
+    """
+
+    translations = TRANSLATIONS.get(text, None)
+    if not isinstance(translations, dict):
+        return None
+
+    if language == "en":
+        return text
+
+    translated_text = translations.get(language, None)
+    if not isinstance(translated_text, str):
+        return None
+
+    return translated_text
+
+
 def get_translations(language: str) -> dict:
     """
     Extract translations for a specific language.
     
     Args:
-        language (str): The target language code (e.g., 'en', 'bs')
+        language (str): The target language code.
     
     Returns:
-        dict: Translations for the specified language with English key and translated value
+        dict: Translations for the specified language with English
+            key and translated value.
     """
 
     language_translations = {}
@@ -82,3 +110,27 @@ def get_translations(language: str) -> dict:
             language_translations[english_key] = english_key
 
     return language_translations
+
+
+def translate_error(error: Error, language: str) -> Error:
+    """
+    Translates the message of the given error into the specified language.
+
+    Args:
+        error (Error): The error object containing the message
+            to be translated and any associated fields.
+        language (str): The target language code for the translation
+
+    Returns:
+        Error: A new Error object with the translated message if successful, 
+            or the original error if translation fails.
+    """
+
+    translated_message = translate_text(error.message, language)
+    if not translated_message:
+        return error
+
+    return Error(
+        translated_message,
+        error.fields
+    )

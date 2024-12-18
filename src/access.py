@@ -98,6 +98,7 @@ def verify_access(request: Request, access_token: str) -> Optional[Response]:
     """
 
     if verify_access_token_cookie(request, access_token):
+        g.access_verified = True
         return None
 
     error = None
@@ -109,6 +110,8 @@ def verify_access(request: Request, access_token: str) -> Optional[Response]:
             if not hashed_access_token:
                 error = HASHING_FAILED_ERROR
             else:
+                g.access_verified = True
+
                 cookies = getattr(g, "cookies", {})
                 cookies["access_token"] = hashed_access_token
                 g.cookies = cookies

@@ -15,10 +15,12 @@ try:
     from src.user_agent import get_os_and_browser
     from src.crypto import TOTP, SHA256, generate_base32_secret
     from src.utils import PICKLE, DATA_DIRECTORY_PATH, Error, generate_random_string
+    from src.errors import ENTER_UN_ERROR, ENTER_PWD_ERROR, UN_OR_PWD_NOT_RIGHT_ERROR
 except (ModuleNotFoundError, ImportError):
     from user_agent import get_os_and_browser
     from crypto import TOTP, SHA256, generate_base32_secret
     from utils import PICKLE, DATA_DIRECTORY_PATH, Error, generate_random_string
+    from errors import ENTER_UN_ERROR, ENTER_PWD_ERROR, UN_OR_PWD_NOT_RIGHT_ERROR
 
 
 USER_NAME_MIN_LENGTH: Final[int] = 4
@@ -180,32 +182,28 @@ def get_signin_error(user_name: str, password: str) -> Tuple[Optional["User"], O
     """
 
     if not user_name:
-        return None, Error("Bitte gebe einen Nutzernamen an.", ["user_name"])
+        return None, ENTER_UN_ERROR
 
     if not is_user_name_length_valid(user_name):
-        return None, Error("Deine Nutzername ist zu kurz oder zu lang.", ["user_name"])
+        return None, UN_OR_PWD_NOT_RIGHT_ERROR
 
     if not is_user_name_characters_valid(user_name):
-        return None, Error("Dein Nutzername enthällt ungültige Zeichen.", ["user_name"])
-
-    user_name_or_password_invalid_error = Error(
-        "Dein Nutzername oder dein Passwort ist falsch.", ["user_name", "password"]
-    )
+        return None, UN_OR_PWD_NOT_RIGHT_ERROR
 
     user = get_user_based_on_user_name(user_name)
     if not user:
-        return None, user_name_or_password_invalid_error
+        return None, UN_OR_PWD_NOT_RIGHT_ERROR
 
     if not password:
-        return None, Error("Bitte gebe ein Passwort ein.", ["password"])
+        return None, ENTER_PWD_ERROR
 
     if not is_password_length_valid(password) or not is_password_characters_valid(password):
-        return None, user_name_or_password_invalid_error
+        return None, UN_OR_PWD_NOT_RIGHT_ERROR
 
     password_entropy = calculate_password_entropy(password)
     password_quality = get_password_quality(password_entropy)
     if not is_password_quality_valid(password_quality):
-        return None, user_name_or_password_invalid_error
+        return None, UN_OR_PWD_NOT_RIGHT_ERROR
 
     return user, None
 

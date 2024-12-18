@@ -4,9 +4,9 @@ src/render.py
 This module provides functionality for rendering HTML templates in a Flask application.
 """
 
-from re import DOTALL, sub
 from functools import lru_cache
 from typing import Optional, Final
+from re import DOTALL, sub, findall
 from os import listdir, path, environ
 
 from flask import Request
@@ -14,12 +14,12 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 try:
     from src.request import get_domain_host
-    from src.localisation import LANGUAGES, get_language, get_translations
-    from src.utils import TEMPLATES_DIRECTORY_PATH, read_text, load_dotenv
+    from src.utils import TEMPLATES_DIRECTORY_PATH, Error, read_text, load_dotenv
+    from src.localisation import LANGUAGES, get_language, get_translations, translate_text, translate_error
 except ModuleNotFoundError:
     from request import get_domain_host
-    from localisation import LANGUAGES, get_language, get_translations
-    from utils import TEMPLATES_DIRECTORY_PATH, read_text, load_dotenv
+    from utils import TEMPLATES_DIRECTORY_PATH, Error, read_text, load_dotenv
+    from localisation import LANGUAGES, get_language, get_translations, translate_text, translate_error
 
 
 load_dotenv()
@@ -45,6 +45,11 @@ def minimize_html(html: str) -> str:
     Returns:
         str: A minimized version of the input HTML string.
     """
+
+    pre_tags = findall(r"(<pre.*?>.*?</pre>)", html, flags=DOTALL)
+    for idx, pre_tag in enumerate(pre_tags):
+        placeholder = f"__PRE_TAG_{idx}__"
+        html = html.replace(pre_tag, placeholder)
 
     html = sub(r"<!--.*?-->", "", html, flags=DOTALL)
 
@@ -78,6 +83,10 @@ def minimize_html(html: str) -> str:
 
     html = sub(r">\s+<", "><", html)
     html = html.strip()
+
+    for idx, pre_tag in enumerate(pre_tags):
+        placeholder = f"__PRE_TAG_{idx}__"
+        html = html.replace(placeholder, pre_tag)
 
     return html
 
@@ -139,7 +148,8 @@ def render_jinja_template(template_html: str, **context) -> str:
     return template_env.render(**context)
 
 
-def render_template(template_name: str, request: Request, **context) -> str:
+def render_template(template_name: str, request: Request,
+                    translate_text_fields: Optional[list] = None, **context) -> str:
     """
     Renders a Jinja template with the given context and language settings.
 
@@ -154,6 +164,9 @@ def render_template(template_name: str, request: Request, **context) -> str:
         str: The rendered HTML content of the template as a string.
     """
 
+    if not isinstance(translate_text_fields, list):
+        translate_text_fields = []
+
     language = REQUIRED_LANGUAGE \
         if REQUIRED_LANGUAGE else \
             get_language(request, DEFAULT_LANGUAGE)
@@ -165,7 +178,20 @@ def render_template(template_name: str, request: Request, **context) -> str:
     }
     default_context.update(context)
 
+    for field in translate_text_fields:
+        context_field_content = default_context.get(field, None)
+        if isinstance(context_field_content, str):
+            translated_field_content = translate_text(context_field_content, language)
+            if translated_field_content:
+                default_context[field] = translated_field_content
+
+    context_error = default_context.get("error", None)
+    if isinstance(context_error, Error):
+        default_context["error"] = translate_error(context_error, language)
+
     minimized_template = get_template(template_name)
+    if not minimized_template:
+        return "Not Found."
 
     translations = get_translations(language)
     for key, value in translations.items():
