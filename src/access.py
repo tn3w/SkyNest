@@ -8,25 +8,18 @@ from typing import Final, Optional
 from flask import Request, Response, g
 
 try:
-    from src.utils import Error
     from src.crypto import SHA256
     from src.request import is_post
     from src.render import render_template
-except (ModuleNotFoundError, ImportError) as exc:
-    print(exc)
-    from utils import Error
+    from src.errors import HASHING_FAILED_ERROR, NOT_RIGHT_ERROR
+except (ModuleNotFoundError, ImportError):
     from crypto import SHA256
     from request import is_post
     from render import render_template
+    from errors import HASHING_FAILED_ERROR, NOT_RIGHT_ERROR
 
 
 ACCESS_TOKEN_SHA: Final[SHA256] = SHA256(use_encoding = True)
-HASHING_FAILED_ERROR: Final[Error] = Error(
-    "Beim Hashing des Zugriffstokens ist ein Fehler aufgetreten.", ["access_token"]
-)
-ACCESS_NOT_CORRECT_ERROR: Final[Error] = Error(
-    "Leider war das Zugriffstoken nicht das richtige.", ["access_token"]
-)
 
 
 def verify_access_token_cookie(request: Request, access_token: str) -> bool:
@@ -118,6 +111,6 @@ def verify_access(request: Request, access_token: str) -> Optional[Response]:
                 return None
 
         else:
-            error = ACCESS_NOT_CORRECT_ERROR
+            error = NOT_RIGHT_ERROR
 
     return render_template("grant_access", request, error = error)

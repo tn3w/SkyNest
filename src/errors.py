@@ -9,6 +9,9 @@ except (ModuleNotFoundError, ImportError):
 # UN = username
 # PWD = password
 
+HASHING_FAILED_ERROR: Final[Error] = Error(
+    "An error has occurred while hashing the access token.", ["access_token"]
+)
 NOT_RIGHT_ERROR: Final[Error] = Error("That wasn't correct. Try again.", [])
 ENTER_UN_ERROR: Final[Error] = Error("Please provide a username.", ["user_name"])
 ENTER_PWD_ERROR: Final[Error] = Error("Please enter a password.", ["password"])
