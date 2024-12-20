@@ -8,7 +8,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from src.access import verify_access
 from src.render import render_template
 from src.crypto import sha256_hash_text
-from src.ddos_mitigation import rate_limit
+from src.ddos_mitigation import rate_limit, is_ip_malicious
 from src.state import get_state, create_state, get_beam_id
 from src.utils import CURRENT_DIRECTORY_PATH, Error, text_response
 from src.request import is_post, get_scheme, get_user_agent, get_ip_address
@@ -121,6 +121,9 @@ def checking_browser() -> Optional[str]:
     if isinstance(ip_address, str):
         hashed_ip_address = sha256_hash_text(ip_address)
 
+    if rate_limit(ip_address):
+        return render_template("rate_limit", request)
+
     challenge_cookie = request.cookies.get("challenge")
     if challenge_cookie:
         state_name, state_data = get_state(challenge_cookie)
@@ -130,8 +133,9 @@ def checking_browser() -> Optional[str]:
             g.browser_verified = True
             return None
 
-    if rate_limit(ip_address):
-        return render_template("rate_limit", request)
+    reason = is_ip_malicious(ip_address)
+    if not reason:
+        return
 
     if verify_pow_response(request, difficulty = POW_DIFFICULTY):
         g.browser_verified = True
@@ -147,7 +151,7 @@ def checking_browser() -> Optional[str]:
     return render_template(
         "browser_check", request, powbox_challenge = powbox_challenge,
         powbox_state = powbox_state, difficulty = POW_DIFFICULTY,
-        beam_id = beam_id
+        beam_id = beam_id, reason = reason
     )
 
 

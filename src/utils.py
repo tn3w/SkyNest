@@ -27,7 +27,7 @@ except ModuleNotFoundError:
     from logger import log
 
 
-REDIS_CLIENT: Final[StrictRedis] = StrictRedis(host='127.0.0.1', port=6379, decode_responses=False)
+REDIS_CLIENT: Final[StrictRedis] = StrictRedis(host='127.0.0.1', port=6379, decode_responses=True)
 
 CURRENT_DIRECTORY_PATH: Final[str] = path.dirname(path.abspath(__file__)) \
     .replace("\\", "/").replace("//", "/").replace("src", "").replace("//", "/")
@@ -181,6 +181,21 @@ def cache_with_ttl(ttl: int) -> Callable:
 
 
 def is_cached(function_name: str, *args, class_name: Optional[str] = None, **kwargs) -> bool:
+    """
+    Checks if the result of calling the function with the given arguments is cached in Redis.
+
+    Args:
+        function_name (str): The name of the function to check for caching.
+        *args: Variable length argument list for the function.
+        class_name (Optional[str], optional): The name of the class that
+            the function belongs to. Defaults to None.
+        **kwargs: Arbitrary keyword arguments for the function.
+
+    Returns:
+        bool: True if the result of calling the function with the given
+            arguments is cached in Redis, False otherwise.
+    """
+
     actual_class_name = ""
     if class_name:
         actual_class_name = class_name + ":"

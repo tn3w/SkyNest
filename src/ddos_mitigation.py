@@ -6,10 +6,12 @@ by implementing a rate limiting mechanism based on IP addresses.
 """
 
 from time import time
-from random import choice, randint
-from typing import Final, Optional
+from typing import Final, Optional, Any
 from datetime import datetime, timedelta
 from socket import gethostbyname, gaierror
+from socket import timeout as socket_timeout
+from json import JSONDecodeError, loads as json_loads
+from http.client import RemoteDisconnected, IncompleteRead, HTTPException
 
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -18,13 +20,13 @@ from urllib.error import HTTPError, URLError
 try:
     from src.logger import log
     from src.crypto import sha256_hash_text
-    from src.internet_protocol import reverse_ip, is_ipv4
-    from src.utils import REDIS_CLIENT, cache_with_ttl, str_to_float, matches_rules
+    from src.utils import REDIS_CLIENT, matches_rules
+    from src.internet_protocol import is_valid_ip, reverse_ip, is_ipv4
 except (ModuleNotFoundError, ImportError):
     from logger import log
     from crypto import sha256_hash_text
-    from internet_protocol import reverse_ip, is_ipv4
-    from utils import REDIS_CLIENT, cache_with_ttl, str_to_float, matches_rules
+    from utils import REDIS_CLIENT, matches_rules
+    from internet_protocol import is_valid_ip, reverse_ip, is_ipv4
 
 
 DEFAULT_IP_HASH: Final[str] = "eCpiLALcButgO5xE90Xbt3Oa8Hd5WvScPomOSoP8bts"
@@ -62,6 +64,57 @@ def rate_limit(ip_address: str) -> bool:
     return recent_requests > 15
 
 
+def http_request(url: str, method: str = "GET", timeout: int = 2,
+                 is_json: bool = False, default: Optional[Any] = None) -> Optional[Any]:
+    """
+    Sends an HTTP request to the specified URL and returns the response content.
+
+    Args:
+        url (str): The URL to which the request is sent.
+        method (str, optional): The HTTP method to use for the request. 
+                                Defaults to "GET".
+        timeout (int, optional): The maximum time (in seconds) to wait 
+                                 for a response. Defaults to 2 seconds.
+        is_json (bool, optional): If True, the response content is parsed 
+                                  as JSON and returned as a Python object. 
+                                  If False, the raw response content is 
+                                  returned as bytes. Defaults to False.
+        default (Optional[Any], optional): The value to return if an 
+                                            exception occurs during the 
+                                            request. Defaults to None.
+
+    Returns:
+        Optional[Any]: The response content, either as a parsed JSON 
+                        object or as bytes. Returns None if an exception 
+                        occurs during the request.
+    """
+
+    try:
+        req = Request(
+            url, headers = {"User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                " (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.3"
+            }, method = method
+        )
+
+        with urlopen(req, timeout = timeout) as response:
+            if response.getcode() != 200:
+                return default
+
+            content = response.read().decode("utf-8")
+
+        if is_json:
+            return json_loads(content)
+
+        return content
+    except (HTTPError, URLError, socket_timeout, TimeoutError, JSONDecodeError,
+            RemoteDisconnected, IncompleteRead, HTTPException, UnicodeEncodeError,
+            ConnectionResetError, ConnectionAbortedError, ConnectionRefusedError, ConnectionError):
+        log(f"{url} could not be requested", level = 4)
+
+    return default
+
+
 MALICIOUS_ASNS: Final[list[str]] = [
     "Fastly", "Incapsula", "Akamai", "AkamaiGslb", "Google", "Datacamp Limited",
     "Bing", "Censys", "Hetzner", "Linode", "Amazon", "AWS", "DigitalOcean", "Vultr",
@@ -89,103 +142,6 @@ def is_asn_malicious(asn: str) -> bool:
     return False
 
 
-@cache_with_ttl(28800)
-def is_ip_malicious_ipapi(ip_address: str) -> Optional[bool]:
-    """
-    Uses the IPApi.com API to check the reputation of the given IP address.
-
-    Args:
-        ip_address (str): The IP address to check.
-        api_key (Optional[str]): The API key for authenticating with the IPApi.com API.
-                                 If provided, it will be included in the request.
-
-    Returns:
-        Optional[bool]: True if the IP address is malicious, False if it is not, or None
-                        if an error occurs.
-    """
-
-    url = f"http://ip-api.com/json/{ip_address}?fields=proxy,hosting"
-
-    data = http_request(url, is_json = True, default = {})
-    if not isinstance(data, dict):
-        return None
-
-    some_data_provided = False
-    for key in ["proxy", "hosting"]:
-        value = data.get(key, None)
-        if value is True:
-            return True
-
-        if value is not None:
-            some_data_provided = True
-
-    if not some_data_provided:
-        return None
-
-    return False
-
-
-@cache_with_ttl(28800)
-def is_ip_malicious_ipintel(ip_address: str, _: Optional[str] = None) -> Optional[bool]:
-    """
-    Uses the getipintel.net API to check the reputation of the given IP address.
-
-    Args:
-        ip_address (str): The IP address to check.
-
-    Returns:
-        Optional[bool]: True if the IP address is malicious, False otherwise.
-    """
-
-    random_email = ''.join(
-        choice(
-            "abcdefghijklmnopqrstuvwxyz"
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        ) for _ in range(randint(4, 9))
-    ) + choice(["@outlook.com", "gmail.com", "icloud.com", "aol.com"])
-
-    url = f"https://check.getipintel.net/check.php?ip={ip_address}&contact={random_email}"
-
-    data = http_request(url, default = "")
-    score = str_to_float(data)
-    if not score:
-        return None
-
-    if score > 0.90:
-        return True
-
-    return False
-
-
-@cache_with_ttl(28800)
-def is_ip_malicious_stopforumspam(ip_address: str) -> bool:
-    """
-    Uses the stopforumspam.org API to check the reputation of the given IP address.
-
-    Args:
-        ip_address (str): The IP address to check.
-
-    Returns:
-        Optional[bool]: True if the IP address is malicious, False otherwise.
-    """
-
-    url = f'https://api.stopforumspam.org/api?ip={ip_address}&json'
-
-    response_json = http_request(url, is_json = True, default = {})
-    if not isinstance(response_json, dict):
-        return False
-
-    if not response_json.get('success') == 1:
-        return False
-
-    ip_info = response_json.get("ip", {})
-    appears = ip_info.get("appears", 0)
-    frequency = ip_info.get("frequency", 0)
-
-    return appears >= 1 and frequency >= 2
-
-
-@cache_with_ttl(28800)
 def is_ip_malicious_geoip(ip_address: str, rules: Optional[tuple]) -> Optional[bool]:
     """
     Checks the reputation of the given IP address using GeoIP databases.
@@ -225,81 +181,108 @@ def is_ip_malicious_geoip(ip_address: str, rules: Optional[tuple]) -> Optional[b
     return False
 
 
-def is_ip_malicious(ip_address: str, rules: tuple) -> bool:
+def add_to_cache(key: str, ip_address: str, value: Optional[bool], short: bool = False) -> None:
     """
-    Checks whether the given IP address is malicious.
+    Caches the result of an IP address check in Redis using a hashed IP.
+    
+    Args:
+        key (str): The cache key prefix to use.
+        ip_address (str): The IP address to cache results for.
+        value (Optional[bool]): The boolean result to cache.
+        short (bool, optional): If True, sets a 30 second TTL.
+            If False, sets an 8 hour TTL. Defaults to False.
+    
+    Returns:
+        None
+    """
+
+    if value is None:
+        return
+
+    hashed_ip_address = sha256_hash_text(ip_address)
+    if not hashed_ip_address:
+        return
+
+    REDIS_CLIENT.setex(
+        name=key + ":" + hashed_ip_address,
+        time=30 if short else 28800,
+        value="1" if value else "0"
+    )
+
+
+def get_cache(key: str, ip_address: str) -> Optional[bool]:
+    """
+    Retrieves a cached IP address check result from Redis.
+    
+    Args:
+        key (str): The cache key prefix to look up.
+        ip_address (str): The IP address to get cached results for.
+        
+    Returns:
+        Optional[bool]: The cached result if found (True/False),
+            or None if no cache entry exists.
+    """
+
+    hashed_ip_address = sha256_hash_text(ip_address)
+    if not hashed_ip_address:
+        return None
+
+    result = REDIS_CLIENT.get(key + ":" + hashed_ip_address)
+    if result:
+        return result == "1"
+
+    return None
+
+
+def is_ip_malicious_ipapi(ip_address: str) -> Optional[bool]:
+    """
+    Uses the IPApi.com API to check the reputation of the given IP address.
 
     Args:
         ip_address (str): The IP address to check.
 
     Returns:
-        bool: True if the IP address is malicious, False otherwise.
+        Optional[bool]: True if the IP address is malicious, False if it is not, or None
+            if an error occurs.
     """
 
-    if not isinstance(ip_address, str):
-        return False
+    cached_result = get_cache("ipapi", ip_address)
+    if isinstance(cached_result, bool):
+        return cached_result
 
-    for third_party in [
-            is_ip_malicious_ipapi,
-            is_ip_malicious_ipintel,
-            is_ip_malicious_stopforumspam
-        ]:
+    url = f"http://ip-api.com/json/{ip_address}?fields=proxy,hosting"
 
-        is_malicious = third_party(ip_address)
-        if is_malicious is None:
-            continue
-
-        if is_malicious is True:
-            return is_malicious
-
-        break
-
-    if is_ip_malicious_geoip(ip_address, rules):
-        return True
-
-    return False
-
-
-@cache_with_ttl(28800)
-def is_ipv4_tor(ipv4_address: Optional[str] = None) -> Optional[bool]:
-    """
-    Checks whether the given IPv4 address is Tor.
-
-    Args:
-        ipv4_address (str): The IPv4 address to check.
-
-    Returns:
-        bool: True if the IPv4 address is Tor, False otherwise.
-    """
-
-    if not ipv4_address:
+    data = http_request(url, is_json = True, default = {})
+    if not isinstance(data, dict):
         return None
 
-    query = reverse_ip(ipv4_address)
-
-    try:
-        resolved_ip = gethostbyname(query)
-
-        if resolved_ip == '127.0.0.2':
+    for key in ["proxy", "hosting"]:
+        value = data.get(key, None)
+        if value is True:
+            add_to_cache("ipapi", ip_address, True)
             return True
 
-    except gaierror:
+    if "proxy" not in data and "hosting" not in data:
         return None
 
+    add_to_cache("ipapi", ip_address, False)
     return False
 
 
-@cache_with_ttl(28800)
-def is_ip_tor_exonerator(ip_address: Optional[str] = None) -> bool:
+def is_ip_tor_exonerator(ip_address: str) -> Optional[bool]:
     """
-    Checks whether the given IP address is Tor using the Exonerator service.
-
+    Checks if an IP address is a Tor exit node using the Tor Project's ExoneraTor service.
+    
     Args:
-        ip_address (str): The IPv6 address to check.
-
+        ip_address (str): The IP address to check.
+        
     Returns:
-        bool: True if the IPv6 address is Tor, False otherwise.
+        Optional[bool]: True if IP is a Tor exit node, False if not.
     """
+
+    cached_result = get_cache("tor_exonerator", ip_address)
+    if isinstance(cached_result, bool):
+        return cached_result
 
     today = (datetime.now() - timedelta(days = 2)).strftime('%Y-%m-%d')
 
@@ -327,29 +310,84 @@ def is_ip_tor_exonerator(ip_address: Optional[str] = None) -> bool:
 
                 html += chunk
                 if "Result is positive" in html:
+                    add_to_cache("tor_exonerator", ip_address, True)
                     return True
 
     except (HTTPError, URLError, TimeoutError):
-        log(f"{ip_address} connection could not be looked up on Exonerator", level = 4)
+        log("Tor exonerator failed.")
 
+        add_to_cache("tor_exonerator", ip_address, True, True)
+        return True
+
+    add_to_cache("tor_exonerator", ip_address, False)
     return False
 
 
-def is_ip_tor(ip_address: str) -> bool:
+def is_ipv4_tor(ip_address: str) -> Optional[bool]:
     """
-    Checks whether the given IP address is Tor.
+    Checks if an IPv4 address is a Tor exit node using DNS-based detection.
+    
+    Args:
+        ip_address (str): The IPv4 address to check.
+        
+    Returns:
+        Optional[bool]: True if IP is a Tor exit node,
+            False if not, None if IP is invalid.
+    """
+
+    cached_result = get_cache("tor_hostname", ip_address)
+    if isinstance(cached_result, bool):
+        return cached_result
+
+    if not ip_address:
+        return None
+
+    query = reverse_ip(ip_address)
+
+    try:
+        resolved_ip = gethostbyname(query)
+
+        if resolved_ip == '127.0.0.2':
+            add_to_cache("tor_hostname", ip_address, True)
+            return True
+
+    except gaierror:
+        log("Tor hostname failed.")
+
+        add_to_cache("tor_hostname", ip_address, True, True)
+        return True
+
+    add_to_cache("tor_hostname", ip_address, False)
+    return False
+
+
+def is_ip_malicious(ip_address: str) -> Optional[str]:
+    """
+    Performs comprehensive malicious IP detection using multiple methods.
 
     Args:
         ip_address (str): The IP address to check.
 
     Returns:
-        bool: True if the IP address is Tor, False otherwise.
+        Optional[str]: String indicating detection source if malicious, None if not malicious.
     """
 
-    if is_ipv4(ip_address) and is_ipv4_tor(ip_address) is True:
-        return True
+    if not is_valid_ip(ip_address):
+        return "Invalid"
 
-    if is_ip_tor_exonerator(ip_address):
-        return True
+    is_malicious = is_ip_malicious_ipapi(ip_address)
+    is_tor_exonerator = is_ip_tor_exonerator(ip_address)
 
-    return False
+    is_tor_v4 = False
+    if is_ipv4(ip_address):
+        is_tor_v4 = is_ipv4_tor(ip_address)
+
+    for (third_party_name, third_party_result) in [
+        ("Malicious", is_malicious),
+        ("TOR", is_tor_exonerator),
+        ("TORv4", is_tor_v4)
+    ]:
+        if third_party_result is True:
+            return third_party_name
+
+    return None
