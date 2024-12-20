@@ -5,6 +5,7 @@ This module provides utility functions for handling HTTP requests in a web appli
 """
 
 from urllib.parse import urlparse
+
 from flask import Request
 
 

@@ -5,7 +5,8 @@ This module provides functionality for managing access tokens in a Flask applica
 """
 
 from typing import Final, Optional
-from flask import Request, Response, g
+
+from flask import Request, g
 
 try:
     from src.crypto import SHA256
