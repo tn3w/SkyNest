@@ -32,6 +32,12 @@ LOGO: Final[str] = """
 """
 
 
+POW_DIFFICULTY_RAW: str = environ.get("POW_DIFFICULTY", "")
+POW_DIFFICULTY: int = 5
+if POW_DIFFICULTY_RAW.isdigit():
+    POW_DIFFICULTY = int(POW_DIFFICULTY_RAW)
+
+
 ACCESS_TOKEN: Final[Optional[str]] = environ.get("ACCESS_TOKEN", None)
 ONE_YEAR_IN_SECONDS: Final[int] = 31536000
 
@@ -127,7 +133,7 @@ def checking_browser() -> Optional[str]:
     if rate_limit(ip_address):
         return render_template("rate_limit", request)
 
-    if verify_pow_response(request):
+    if verify_pow_response(request, difficulty = POW_DIFFICULTY):
         g.browser_verified = True
 
         cookies = getattr(g, "cookies", {})
@@ -139,11 +145,9 @@ def checking_browser() -> Optional[str]:
 
     powbox_challenge, powbox_state = generate_powbox_challenge()
     return render_template(
-        "browser_check", request,
-        powbox_challenge = powbox_challenge,
-        powbox_state = powbox_state,
-        beam_id = beam_id,
-        reason = "TOR"
+        "browser_check", request, powbox_challenge = powbox_challenge,
+        powbox_state = powbox_state, difficulty = POW_DIFFICULTY,
+        beam_id = beam_id
     )
 
 

@@ -53,13 +53,16 @@ def generate_powbox_challenge() -> Tuple[str, str]:
     return challenge, state
 
 
-def verify_pow_response(request: Request) -> bool:
+def verify_pow_response(request: Request, difficulty: int = 5) -> bool:
     """
     Verify the Proof of Work (PoW) response from a client request.
 
     Args:
         request (Request): The incoming request object containing the 
             PoW solution and state.
+        difficulty (int, optional): The difficulty level for the PoW. 
+            The default value is 5, which means the solution hash must 
+            start with at least 5 leading zeros.
 
     Returns:
         bool: True if the PoW response is valid, False otherwise.
@@ -69,23 +72,17 @@ def verify_pow_response(request: Request) -> bool:
         return False
 
     powbox_solution = request.form.get("powbox_solution")
-    if not powbox_solution:
-        return False
-
     powbox_state = request.form.get("powbox_state")
-    if not powbox_state:
+    if not powbox_solution or not powbox_state:
         return False
 
     state_name, decoded_data = get_state(powbox_state, True)
-    if state_name != "pow":
-        return False
-
-    challenge = decoded_data.get("challenge")
-    if not challenge:
+    challenge = decoded_data.get("challenge", None)
+    if state_name != "pow" or not challenge:
         return False
 
     solution_hash = sha256(f"{challenge}{powbox_solution}".encode()).hexdigest()
-    if not solution_hash.startswith("00000"):
+    if not solution_hash.startswith("0" * difficulty):
         return False
 
     return True

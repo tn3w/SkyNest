@@ -8,7 +8,7 @@ Stack:
 - Web Framework: Gunicorn + Flask
 - Rendering: Jinja2
 - Database: Redis + local files
-- Security: PoW + Image Captchas
+- Security: PoW + Image Captchas + IP Check + Beam IDs
 
 ## 🚀 Installation
 Install git: `sudo apt install git`
@@ -37,7 +37,10 @@ SkyNest offers various configuration options:
 - `HOST`: Specifies the hostname or IP address on which the Gunicorn server will listen for incoming requests. (Default: 127.0.0.1)
 - `PORT`: Defines the port number on which the Gunicorn server will listen for incoming requests. (Default: 8080)
 - `WORKERS`: Sets the number of worker processes that Gunicorn will spawn to handle incoming requests. (Default: 16)
-- `CREATOR`: Determines whether to display an creator name in the application. (Default: None)
+- `CERT_FILE_PATH`: Specifies the file path to the SSL certificate for secure connections. (Default: None)
+- `KEY_FILE_PATH`: Specifies the file path to the SSL key for secure connections. (Default: None)
+- `POW_DIFFICULTY`: Sets the difficulty level for proof of work calculations. (Default: 5)
+- `ACCESS_TOKEN`: Used to provide an additional layer of security during development by requiring an access token to view the application. (Default: None)
 - `DEFAULT_LANGUAGE`: Specifies the default language for the application, which can be used for language fallback. (Default: en)
 - `REQUIRED_LANGUAGE`: Indicates a specific language that the application should use, bypassing the default language check. (Default: None)
-- `ACCESS_TOKEN`: Used to provide an additional layer of security during development by requiring an access token to view the application. (Default: None)
+- `CREATOR`: Determines whether to display a creator name in the application. (Default: None)
