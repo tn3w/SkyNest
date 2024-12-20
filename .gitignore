@@ -165,3 +165,6 @@ data/
 
 # Decompressed Datasets to speed up Captcha delivery
 *-decompressed.pkl
+
+# PEM Files
+*.pem

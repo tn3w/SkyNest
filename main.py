@@ -8,9 +8,9 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from src.access import verify_access
 from src.render import render_template
 from src.crypto import sha256_hash_text
-from src.utils import Error, text_response
 from src.ddos_mitigation import rate_limit
 from src.state import get_state, create_state, get_beam_id
+from src.utils import CURRENT_DIRECTORY_PATH, Error, text_response
 from src.request import is_post, get_scheme, get_user_agent, get_ip_address
 from src.errors import WEB_ERROR_CODES, NOT_RIGHT_ERROR, UN_OR_PWD_NOT_RIGHT_ERROR
 from src.user import create_test_user, get_signin_error, create_session, verify_twofa
@@ -386,7 +386,6 @@ class GunicornApp(BaseApplication):
         self.options = options or {}
         super().__init__()
 
-
     def load_config(self):
         if not self.cfg:
             return
@@ -417,14 +416,30 @@ def main() -> None:
     host = environ.get("HOST", "127.0.0.1")
     port = environ.get("PORT", "8080")
 
-    workers = environ.get("WORKERS", 16)
-    if isinstance(workers, str) and port.isdigit():
-        workers = int(workers)
+    workers_raw = environ.get("WORKERS", "")
+
+    workers = 16
+    if isinstance(workers_raw, str) and workers_raw.isdigit():
+        workers = int(workers_raw)
+
+    cert_file_path = environ.get("CERT_FILE_PATH", None)
+    if cert_file_path:
+        cert_file_path = cert_file_path.replace("./", CURRENT_DIRECTORY_PATH)
+
+    key_file_path = environ.get("KEY_FILE_PATH", None)
+    if key_file_path:
+        key_file_path = key_file_path.replace("./", CURRENT_DIRECTORY_PATH)
 
     options = {
         "bind": f"{host}:{port}",
-        "workers": workers,
+        "workers": workers
     }
+
+    if cert_file_path and key_file_path:
+        options.update({
+            "certfile": cert_file_path,
+            "keyfile": key_file_path
+        })
 
     GunicornApp(app, options).run()
 
