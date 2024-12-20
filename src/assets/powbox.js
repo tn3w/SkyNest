@@ -216,7 +216,6 @@ const translations = {
         "sm": "Fa'amaonia ...",
         "st": "E hlahlobisoa ...",
         "sn": "Kusimbiswa ...",
-        "yo": "Nwọn ń ṣayẹwo ..."
     },
     "Success!": {
         "en": "Success!",
@@ -326,7 +325,6 @@ const translations = {
         "sm": "Manuia!",
         "st": "Katleho!",
         "sn": "Kubudirira!",
-        "yo": "Aṣeyọri!"
     },
     "Source code on <a href=\"https://github.com/tn3w/TrueClick\" target=\"_blank\">GitHub</a>": {
         "en": "Source code on <a href=\"https://github.com/tn3w/TrueClick\" target=\"_blank\">GitHub</a>",
@@ -884,7 +882,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         let difficulty = Number(dataDifficulty);
-        if (isNaN(difficulty) || dataDifficulty === undefined || dataDifficulty === null || dataDifficulty === '') {
+        if (Number.isNaN(difficulty) || dataDifficulty === undefined || dataDifficulty === null || dataDifficulty === '') {
             difficulty = 5;
         }
 

@@ -91,10 +91,14 @@ class Base62:
 
                 num = num * base + char_to_value[char]
 
-            byte_length = (num.bit_length() + 7) // 8 or 1
+            if num == 0:
+                byte_length = 1
+            else:
+                byte_length = (num.bit_length() + 7) // 8
+
             return num.to_bytes(byte_length, byteorder='big')
 
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, AttributeError):
             log("Base62 Decoding Error.", level=4)
 
         return None

@@ -12,15 +12,15 @@ from datetime import datetime
 from secrets import token_hex
 from shutil import move, copy2
 from traceback import format_exc
+from multiprocessing import Process
 from typing import Optional, Final, Any
-from concurrent.futures import ThreadPoolExecutor
+from atexit import register as atexit_register
 
 
 CURRENT_DIRECTORY_PATH: Final[str] = path.dirname(path.abspath(__file__))\
     .replace("\\", "/").replace("//", "/").replace("src", "").replace("//", "/")
 
 LOG_MAX_LINES: Final[int] = 30000
-LOG_EXECUTOR: Final[ThreadPoolExecutor] = ThreadPoolExecutor()
 LOG_LEVELS: Final[dict] = {
     1: "INFO",
     2: "NOTICE",
@@ -229,6 +229,18 @@ def _execute_log(message: str, *args, level: int = 1, exception: Optional[str] =
         print(full_message)
 
 
+def terminate_process(process: Process) -> None:
+    try:
+        if not isinstance(process, Process):
+            return
+
+        process.terminate()
+        process.join()
+
+    except Exception:
+        pass
+
+
 def log(message: str, *args, level: int = 1) -> None:
     """
     Log a message asynchronously with optional additional arguments.
@@ -244,7 +256,15 @@ def log(message: str, *args, level: int = 1) -> None:
     if exc_info()[0] is not None:
         exception = format_exc()
 
-    LOG_EXECUTOR.submit(
-        _execute_log, message, *args, level = level, exception = exception,
-        quiet = QUIET, log_directory_path = LOG_DIRECTORY_PATH
+    process = Process(
+        target = _execute_log,
+        args = (message, *args),
+        kwargs = {
+            "level": level,
+            "exception": exception,
+            "quiet": QUIET,
+            "log_directory_path": LOG_DIRECTORY_PATH
+        }
     )
+    process.start()
+    atexit_register(terminate_process, process)
