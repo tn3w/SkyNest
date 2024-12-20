@@ -5,12 +5,11 @@ Provides simple logging framework, allows for asynchronous logging of
 messages to a specified log file. It supports different log levels.
 """
 
+from time import time_ns
 from sys import exc_info
-from functools import wraps
 from os import unlink, path
 from datetime import datetime
 from secrets import token_hex
-from time import time, time_ns
 from shutil import move, copy2
 from traceback import format_exc
 from typing import Optional, Final, Any
@@ -184,7 +183,7 @@ def _append_to_log(new_log_item: str, log_file_path: str) -> bool:
 
 
 def _execute_log(message: str, *args, level: int = 1, exception: Optional[str] = None,
-                 quiet: bool = True, log_directory_path: str = None):
+                 quiet: bool = True, log_directory_path: str = CURRENT_DIRECTORY_PATH):
     """
     Format and execute logging of a message.
 
@@ -194,8 +193,11 @@ def _execute_log(message: str, *args, level: int = 1, exception: Optional[str] =
         level (int, optional): The log level (default is 1).
         exception (Optional[str], optional): An exception message to include, if any.
         quiet (bool, optional): If True, suppress console output (default is True).
-        log_directory_path (str, optional): The directory path for the log file.
+        log_directory_path (str): The directory path for the log file.
     """
+
+    if not log_directory_path:
+        log_directory_path = CURRENT_DIRECTORY_PATH
 
     current_ns_time = time_ns()
     formatted_timestamp = datetime.fromtimestamp(current_ns_time / 1e9)\
@@ -246,26 +248,3 @@ def log(message: str, *args, level: int = 1) -> None:
         _execute_log, message, *args, level = level, exception = exception,
         quiet = QUIET, log_directory_path = LOG_DIRECTORY_PATH
     )
-
-
-def log_execution_time(func):
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        start_time = time()
-        result = func(*args, **kwargs)
-        end_time = time()
-
-        elapsed_time_ms = (end_time - start_time) * 1000
-
-        class_name = (
-            f"{args[0].__class__.__name__}."
-            if args and hasattr(args[0], "__class__")
-            else ""
-        )
-        if func.__name__ == "minimize_html":
-            print(f"Function '{class_name}{func.__name__}' executed in {elapsed_time_ms:.6f} ms")
-
-        return result
-
-    return wrapper

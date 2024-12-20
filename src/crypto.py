@@ -68,7 +68,7 @@ class Base62:
 
 
     @staticmethod
-    def decode(serialized: str) -> bytes:
+    def decode(serialized: str) -> Optional[bytes]:
         """
         Decodes a Base62-encoded string back into its original byte sequence.
 
@@ -76,7 +76,7 @@ class Base62:
             serialized (str): The Base62-encoded string to decode.
 
         Returns:
-            bytes: The original byte sequence.
+            Optional[bytes]: The original byte sequence.
         """
 
         try:
@@ -167,21 +167,6 @@ class SHA256:
 
 
     def _hash(self, plain_value: bytes, salt: bytes) -> bytes:
-        """
-        Computes the hash of the given plain value combined with the salt.
-
-        Args:
-            plain_value (bytes): The plain value to be hashed.
-            salt (bytes): The salt to be combined with the plain value.
-
-        Returns:
-            bytes: The resulting hash as a byte sequence.
-        """
-
-        return plain_value + salt
-
-
-    def _hash(self, plain_value: bytes, salt: bytes) -> bytes:
         kdf = PBKDF2HMAC(
             algorithm = hashes.SHA3_256(),
             length = self.hash_length,
@@ -195,9 +180,8 @@ class SHA256:
         return hashed_value
 
 
-    def hash(self, plain_value: Union[str, bytes], salt: Optional[Union[str, bytes]] = None,
-             return_salt: bool = False) -> Optional[
-                 Union[str, bytes, Tuple[Union[str, bytes], bytes]]]:
+    def hash(self, plain_value: Union[str, bytes],
+             salt: Optional[Union[str, bytes]] = None) -> Optional[Union[str, bytes]]:
         """
         Hashes the given plain value with an optional salt.
 
@@ -205,11 +189,9 @@ class SHA256:
             plain_value (Union[str, bytes]): The plain value to be hashed.
             salt (Optional[Union[str, bytes]]): An optional salt.
                 If not provided, a new salt will be generated.
-            return_salt (bool, optional): If True, returns the salt
-                along with the hash. Default is False.
 
         Returns:
-            Optional[Union[str, bytes, Tuple[Union[str, bytes], bytes]]]: 
+            Optional[Union[str, bytes]]: 
                 The serialized hash, and optionally the salt if return_salt is True.
         """
 
@@ -231,9 +213,6 @@ class SHA256:
 
             if self.use_encoding:
                 combined_hash = Base62.encode(combined_hash)
-
-            if return_salt:
-                return combined_hash, use_salt
 
             return combined_hash
 
@@ -263,10 +242,13 @@ class SHA256:
             if isinstance(plain_value, str):
                 plain_value = plain_value.encode('utf-8')
 
-            if self.use_encoding:
+            if isinstance(hashed_value, str) and self.use_encoding:
                 hashed_value = Base62.decode(hashed_value)
                 if not hashed_value:
                     return False
+
+            if not isinstance(hashed_value, bytes):
+                return False
 
             use_salt = b""
             real_hash = hashed_value
@@ -369,7 +351,7 @@ class AES:
         self.use_encoding = use_encoding
 
 
-    def _encrypt(self, hashed_token: bytes, plain_value: bytes) -> Tuple[Optional[bytes], bytes]:
+    def _encrypt(self, hashed_token: bytes, plain_value: bytes) -> Tuple[bytes, bytes]:
         """
         Encrypts the given plain value using the hashed token.
 
@@ -378,8 +360,8 @@ class AES:
             plain_value (bytes): The plain value to be encrypted.
 
         Returns:
-            Tuple[Optional[bytes], bytes]: A tuple containing the initialization
-                vector (if applicable) and the encrypted value.
+            Tuple[bytes, bytes]: A tuple containing the initialization
+                vector and the encrypted value.
         """
 
         iv = token_bytes(16)
@@ -471,10 +453,13 @@ class AES:
         """
 
         try:
-            if self.use_encoding:
+            if self.use_encoding and isinstance(cipher_value, str):
                 cipher_value = Base62.decode(cipher_value)
                 if not cipher_value:
                     return None
+
+            if not isinstance(cipher_value, bytes):
+                return None
 
             salt = cipher_value[:16]
 
@@ -510,7 +495,7 @@ def generate_base32_secret(length: int = 16) -> str:
     return ''.join(choice(base32_chars) for _ in range(length))
 
 
-def generate_totp_qrcode(secret: str, company: str, user: str) -> str:
+def generate_totp_qrcode(secret: str, company: str, user: str) -> QRCode:
     """
     Generate a QR code for a TOTP setup and return it as a base64 URL for a PNG image.
 

@@ -62,7 +62,7 @@ def rate_limit(ip_address: str) -> bool:
     return recent_requests > 15
 
 
-MALICIOUS_ASNS: Final[str] = [
+MALICIOUS_ASNS: Final[list[str]] = [
     "Fastly", "Incapsula", "Akamai", "AkamaiGslb", "Google", "Datacamp Limited",
     "Bing", "Censys", "Hetzner", "Linode", "Amazon", "AWS", "DigitalOcean", "Vultr",
     "Azure", "Alibaba", "Netlify", "IBM", "Oracle", "Scaleway", "Cloud", "VPN"
@@ -186,7 +186,7 @@ def is_ip_malicious_stopforumspam(ip_address: str) -> bool:
 
 
 @cache_with_ttl(28800)
-def is_ip_malicious_geoip(ip_address: str, rules: Optional[tuple]) -> bool:
+def is_ip_malicious_geoip(ip_address: str, rules: Optional[tuple]) -> Optional[bool]:
     """
     Checks the reputation of the given IP address using GeoIP databases.
 
@@ -194,7 +194,7 @@ def is_ip_malicious_geoip(ip_address: str, rules: Optional[tuple]) -> bool:
         ip_address (str): The IP address to check.
 
     Returns:
-        bool: True if the IP address is found to be malicious.
+        Optional[bool]: True if the IP address is found to be malicious.
     """
 
     geoip = get_geoip()
@@ -225,13 +225,12 @@ def is_ip_malicious_geoip(ip_address: str, rules: Optional[tuple]) -> bool:
     return False
 
 
-def is_ip_malicious(ip_address: str, third_parties: Optional[list] = None) -> bool:
+def is_ip_malicious(ip_address: str, rules: tuple) -> bool:
     """
     Checks whether the given IP address is malicious.
 
     Args:
         ip_address (str): The IP address to check.
-        third_parties (Optional[list]): A list of third-party services to use for the check.
 
     Returns:
         bool: True if the IP address is malicious, False otherwise.
@@ -240,42 +239,29 @@ def is_ip_malicious(ip_address: str, third_parties: Optional[list] = None) -> bo
     if not isinstance(ip_address, str):
         return False
 
-    if third_parties is None:
-        third_parties = ["ipapi", "ipintel", "stopforumspam", "geoip"]
+    for third_party in [
+            is_ip_malicious_ipapi,
+            is_ip_malicious_ipintel,
+            is_ip_malicious_stopforumspam
+        ]:
 
-    for third_party, third_party_function in {
-            "ipapi": is_ip_malicious_ipapi,
-            "ipintel": is_ip_malicious_ipintel,
-            "stopforumspam": is_ip_malicious_stopforumspam,
-        }.items():
-
-        is_allowed = False
-        for allowed_third_party in third_parties:
-            if allowed_third_party.lower().startswith(third_party):
-                is_allowed = True
-
-        if not is_allowed:
+        is_malicious = third_party(ip_address)
+        if is_malicious is None:
             continue
 
-        api_key = None
-        if ":" in third_party:
-            found_api_key = third_party.split(":")[1].strip()
-            if len(found_api_key) > 1:
-                api_key = found_api_key
-
-        is_malicious = third_party_function(ip_address, api_key)
         if is_malicious is True:
-            return True
+            return is_malicious
 
-    if "geoip" in third_parties:
-        if is_ip_malicious_geoip(ip_address):
-            return True
+        break
+
+    if is_ip_malicious_geoip(ip_address, rules):
+        return True
 
     return False
 
 
 @cache_with_ttl(28800)
-def is_ipv4_tor(ipv4_address: Optional[str] = None) -> bool:
+def is_ipv4_tor(ipv4_address: Optional[str] = None) -> Optional[bool]:
     """
     Checks whether the given IPv4 address is Tor.
 
@@ -286,6 +272,9 @@ def is_ipv4_tor(ipv4_address: Optional[str] = None) -> bool:
         bool: True if the IPv4 address is Tor, False otherwise.
     """
 
+    if not ipv4_address:
+        return None
+
     query = reverse_ip(ipv4_address)
 
     try:
@@ -295,7 +284,7 @@ def is_ipv4_tor(ipv4_address: Optional[str] = None) -> bool:
             return True
 
     except gaierror:
-        log(f"{ipv4_address} connection could not be established", level = 4)
+        return None
 
     return False
 
@@ -346,29 +335,21 @@ def is_ip_tor_exonerator(ip_address: Optional[str] = None) -> bool:
     return False
 
 
-def is_ip_tor(ip_address: str, third_parties: Optional[list] = None) -> bool:
+def is_ip_tor(ip_address: str) -> bool:
     """
     Checks whether the given IP address is Tor.
 
     Args:
         ip_address (str): The IP address to check.
-        third_parties (Optional[list]): A list of third-party services to use for the check.
+
     Returns:
         bool: True if the IP address is Tor, False otherwise.
     """
 
-    if not isinstance(ip_address, str):
-        return False
+    if is_ipv4(ip_address) and is_ipv4_tor(ip_address) is True:
+        return True
 
-    if third_parties is None:
-        third_parties = ["tor_hostname", "tor_exonerator"]
-
-    if "tor_hostname" in third_parties and is_ipv4(ip_address):
-        if is_ipv4_tor(ip_address):
-            return True
-
-    if "tor_exonerator" in third_parties:
-        if is_ip_tor_exonerator(ip_address):
-            return True
+    if is_ip_tor_exonerator(ip_address):
+        return True
 
     return False

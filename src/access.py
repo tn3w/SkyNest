@@ -52,7 +52,11 @@ def create_access_token_hash(access_token: str) -> Optional[str]:
         Optional[str]: The hashed access token, or None if hashing fails.
     """
 
-    return ACCESS_TOKEN_SHA.hash(access_token)
+    hashed_access_token = ACCESS_TOKEN_SHA.hash(access_token)
+    if isinstance(hashed_access_token, str):
+        return hashed_access_token
+
+    return None
 
 
 def get_send_access_token(request: Request) -> Optional[str]:
@@ -77,7 +81,7 @@ def get_send_access_token(request: Request) -> Optional[str]:
     return access_token
 
 
-def verify_access(request: Request, access_token: str) -> Optional[Response]:
+def verify_access(request: Request, access_token: str) -> Optional[str]:
     """
     Verifies access by comparing the provided access token against stored or sent tokens.
 
@@ -86,7 +90,7 @@ def verify_access(request: Request, access_token: str) -> Optional[Response]:
         access_token (str): The access token to verify.
 
     Returns:
-        Optional[Response]: A rendered template with an error message if verification fails; 
+        Optional[str]: A rendered template with an error message if verification fails; 
             None if access is granted.
     """
 

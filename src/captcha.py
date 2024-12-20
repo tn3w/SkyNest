@@ -158,7 +158,7 @@ def distort_image(image_data: bytes) -> bytes:
     return encoded_img.tobytes()
 
 
-def random_image(images: list) -> bytes:
+def random_image(images: list) -> str:
     """
     Select a random image from a list and convert it to a base64-encoded format.
 
@@ -166,7 +166,7 @@ def random_image(images: list) -> bytes:
         images (list): A list of images from which to select a random image.
 
     Returns:
-        bytes: A base64-encoded byte string representation of the distorted image.
+        str: A base64-encoded byte string representation of the distorted image.
     """
 
     secure_random_image = choice(images)

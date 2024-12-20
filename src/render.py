@@ -15,11 +15,15 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 try:
     from src.request import get_domain_host
     from src.utils import TEMPLATES_DIRECTORY_PATH, Error, read_text, load_dotenv
-    from src.localisation import LANGUAGES, get_language, get_translations, translate_text, translate_error
+    from src.localisation import (
+        LANGUAGES, get_language, get_translations, translate_text, translate_error
+    )
 except ModuleNotFoundError:
     from request import get_domain_host
     from utils import TEMPLATES_DIRECTORY_PATH, Error, read_text, load_dotenv
-    from localisation import LANGUAGES, get_language, get_translations, translate_text, translate_error
+    from localisation import (
+        LANGUAGES, get_language, get_translations, translate_text, translate_error
+    )
 
 
 load_dotenv()
@@ -29,7 +33,7 @@ REQUIRED_LANGUAGE: Optional[str] = environ.get("REQUIRED_LANGUAGE", None)
 if REQUIRED_LANGUAGE not in LANGUAGES:
     REQUIRED_LANGUAGE = None
 
-DEFAULT_LANGUAGE: Optional[str] = environ.get("DEFAULT_LANGUAGE", "en")
+DEFAULT_LANGUAGE: str = environ.get("DEFAULT_LANGUAGE", "en")
 if DEFAULT_LANGUAGE not in LANGUAGES:
     REQUIRED_LANGUAGE = "en"
 

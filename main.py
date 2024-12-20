@@ -1,5 +1,5 @@
 from os import environ
-from typing import Final, Optional
+from typing import Final, Optional, Tuple, Union
 
 from gunicorn.app.base import BaseApplication
 from flask import Flask, Response, request, g
@@ -10,7 +10,7 @@ from src.render import render_template
 from src.crypto import sha256_hash_text
 from src.utils import Error, text_response
 from src.ddos_mitigation import rate_limit
-from src.state import get_state, create_state
+from src.state import get_state, create_state, get_beam_id
 from src.request import is_post, get_scheme, get_user_agent, get_ip_address
 from src.errors import WEB_ERROR_CODES, NOT_RIGHT_ERROR, UN_OR_PWD_NOT_RIGHT_ERROR
 from src.user import create_test_user, get_signin_error, create_session, verify_twofa
@@ -45,7 +45,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 ########################
 
 
-def handle_exception(exception: Exception) -> str:
+def handle_exception(exception: Exception) -> Tuple[str, int]:
     """
     Handle exceptions and render an appropriate error response.
 
@@ -62,8 +62,8 @@ def handle_exception(exception: Exception) -> str:
     description = None
 
     code = str(exception).split(' ', maxsplit=1)[0]
-    if hasattr(exception, 'code'):
-        code = exception.code
+    if hasattr(exception, "code"):
+        code = getattr(exception, "code", None)
         if code in WEB_ERROR_CODES:
             title = WEB_ERROR_CODES[code]['title']
             description = WEB_ERROR_CODES[code]['description']
@@ -71,10 +71,10 @@ def handle_exception(exception: Exception) -> str:
     elif isinstance(exception, Exception):
         title = type(exception).__name__
 
-    if not code:
+    if not isinstance(code, int):
         code = 400
 
-    if not description:
+    if not description and title:
         description = str(exception).replace(title, '').strip()
 
     reveal = getattr(g, "browser_verified", False) and \
@@ -98,12 +98,12 @@ for error_code in WEB_ERROR_CODES:
 
 
 @app.before_request
-def checking_browser() -> Optional[Response]:
+def checking_browser() -> Optional[str]:
     """
     Check the browser's verification status before processing the request.
 
     Returns:
-        Optional[Response]: If the browser is verified, returns None to
+        Optional[str]: If the browser is verified, returns None to
             continue processing the request. If the browser fails verification,
             returns a rendered template for rate limiting or a browser check
             challenge, which will halt further request processing.
@@ -135,24 +135,28 @@ def checking_browser() -> Optional[Response]:
         g.cookies = cookies
         return None
 
+    beam_id = get_beam_id([get_ip_address(request), get_user_agent(request)])
+
     powbox_challenge, powbox_state = generate_powbox_challenge()
     return render_template(
         "browser_check", request,
         powbox_challenge = powbox_challenge,
-        powbox_state = powbox_state
+        powbox_state = powbox_state,
+        beam_id = beam_id,
+        reason = "TOR"
     )
 
 
 if ACCESS_TOKEN:
     @app.before_request
-    def verify_access_wrapper() -> Optional[Response]:
+    def verify_access_wrapper() -> Optional[str]:
         """
         A wrapper function to verify access before processing each request.
         
         Uses the global `ACCESS_TOKEN` to validate the incoming request.
         
         Returns:
-            Optional[Response]: A response object if access verification fails, 
+            Optional[str]: A object if access verification fails, 
                 otherwise None to allow the request to proceed.
         """
 
@@ -207,19 +211,19 @@ def index():
 
 
 @app.route("/auth", methods = ["GET", "POST"])
-def auth() -> Response:
+def auth() -> str:
     """
     Render the authentication page.
 
     Returns:
-        Response: The rendered authentication page.
+        str: The rendered authentication page.
     """
 
     return render_template("auth", request)
 
 
 @app.route("/login", methods = ["GET", "POST"])
-def login() -> Response:
+def login() -> Union[str, Response]:
     """
     Handle the login process, including form submission, CAPTCHA verification, 
     and two-factor authentication (2FA).
@@ -231,7 +235,7 @@ def login() -> Response:
       - Setting up a session for a successful login.
 
     Returns:
-        Response: The rendered template or response text based on the current login state.
+        str: The rendered template or response text based on the current login state.
     """
 
     def render_login(user_name: Optional[str] = None,
@@ -268,7 +272,8 @@ def login() -> Response:
             state = state, error = error
         )
 
-    user_name, password = None, None
+    user_name: Optional[str] = None
+    password: Optional[str] = None
 
     submitted = False
     is_captcha_verified = verify_pow_response(request)
@@ -279,10 +284,13 @@ def login() -> Response:
     if state:
         state_name, state_data = get_state(state, True)
         if state_name:
-            user_name = state_data.get("user_name", None)
-            password = state_data.get("password", None)
+            user_name = state_data.get("user_name")
+            password = state_data.get("password")
 
             submitted = True
+
+        if not isinstance(user_name, str) or not isinstance(password, str):
+            return render_login(user_name, password, error = UN_OR_PWD_NOT_RIGHT_ERROR)
 
         if state_name == "captcha_oneclick":
             is_valid = is_valid_captcha(
@@ -298,7 +306,7 @@ def login() -> Response:
         if state_name == "twofa":
             is_captcha_verified = True
 
-            token = request.args.get("codes")
+            token = request.args.get("codes", None)
             is_totp_verified = verify_twofa(user_name, token)
             if not is_totp_verified:
                 return render_twofa(user_name, password, NOT_RIGHT_ERROR)
@@ -315,6 +323,9 @@ def login() -> Response:
 
         if not user:
             return render_login(user_name, password, error)
+
+        if not isinstance(user_name, str) or not isinstance(password, str):
+            return render_login(user_name, password, error = UN_OR_PWD_NOT_RIGHT_ERROR)
 
         if not is_captcha_verified:
             return render_captcha(user_name, password)
@@ -373,8 +384,15 @@ class GunicornApp(BaseApplication):
 
 
     def load_config(self):
-        config = {key: value for key, value in self.options.items()
-                  if key in self.cfg.settings and value is not None}
+        if not self.cfg:
+            return
+
+        config = {
+            key: value
+            for key, value in self.options.items()
+            if key in self.cfg.settings and value is not None
+        }
+
         for key, value in config.items():
             self.cfg.set(key.lower(), value)
 

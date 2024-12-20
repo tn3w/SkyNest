@@ -11,14 +11,20 @@ from json import loads as json_loads, dumps as json_dumps
 
 try:
     from src.logger import log
+    from src.crypto import SHA256, Base62
     from src.utils import REDIS_CLIENT, generate_random_string
 except (ModuleNotFoundError, ImportError):
     from logger import log
+    from crypto import SHA256, Base62
     from utils import REDIS_CLIENT, generate_random_string
 
 
 STATE_LENGTH: Final[int] = 32
 STATE_BASE62_PATTERN: Final[Pattern] = pattern_compile(r"^[0-9A-Za-z]+$")
+
+SHA256_BEAM: Final[SHA256] = SHA256(
+    10000, hash_length = 15, salt_length = 0
+)
 
 DEFAULT_TIME_TO_LIVE: Final[int] = 600 # 10 minutes in seconds
 TIME_TO_LIVE: Final[dict[str, int]] = {
@@ -125,3 +131,35 @@ def get_state(state: str, single_use: bool = False) -> Tuple[Optional[str], dict
             decoded_data.pop(key)
 
     return state_name, decoded_data
+
+
+def get_beam_id(identifiable_information: list) -> Optional[str]:
+    """
+    Generate a Beam ID from a list of identifiable information.
+
+    Args:
+        identifiable_information (list): A list of strings containing identifiable
+            information that will be concatenated and hashed.
+
+    Returns:
+        Optional[str]: A Beam ID that is 20 characters long, padded with "=" if necessary.
+    """
+
+    identifiable_information_str = ""
+    for information in identifiable_information:
+        if isinstance(information, str):
+            identifiable_information_str += information
+
+    beam_id_hash = SHA256_BEAM.hash(identifiable_information_str)
+    if not isinstance(beam_id_hash, bytes):
+        return None
+
+    beam_id = Base62.encode(beam_id_hash)
+    if not beam_id:
+        return None
+
+    beam_id = beam_id[:20]
+    while len(beam_id) < 20:
+        beam_id += "="
+
+    return beam_id

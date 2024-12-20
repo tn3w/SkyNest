@@ -6,17 +6,17 @@ including random string generation, file read/write operations, environment vari
 loading, and specialized file serialization classes.
 """
 
-from time import time
 from threading import Lock
 from functools import wraps
 from base64 import b64encode
 from io import TextIOWrapper
 from shutil import copy2, move
-from typing import Final, Optional, Any
 from secrets import choice, randbelow, token_hex
+from typing import Final, Optional, Callable, Any
 from os import unlink, fsync, makedirs, path, environ
 from json import load as json_load, dump as json_dump
-from pickle import load as pickle_load, dump as pickle_dump
+from pickle import load as pickle_load, dump as pickle_dump, \
+    loads as pickle_loads, dumps as pickle_dumps
 
 from redis import StrictRedis
 from flask import Response
@@ -136,10 +136,9 @@ def secure_shuffle(original_list: list) -> list:
     return shuffled_list
 
 
-
-def cache_with_ttl(ttl: int) -> callable:
+def cache_with_ttl(ttl: int) -> Callable:
     """
-    Caches the result of a function with a given TTL.
+    Caches the result of a function in Redis with a given TTL.
 
     Args:
         ttl (int): The TTL in seconds.
@@ -148,48 +147,54 @@ def cache_with_ttl(ttl: int) -> callable:
         callable: The decorated function.
     """
 
-    def decorator(func: callable) -> callable:
-        """
-        Internal decorator function.
-
-        Args:
-            func (callable): The function to decorate.
-
-        Returns:
-            callable: The decorated function.
-        """
-
-        cache = {}
+    def decorator(func: Callable) -> Callable:
 
         @wraps(func)
         def wrapper(*args, **kwargs):
-            """
-            Internal wrapper function.
+            if args and hasattr(args[0].__class__, func.__name__):
+                class_name = args[0].__class__.__name__ + ":"
+                actual_args = args[1:]
+            else:
+                class_name = ""
+                actual_args = args
 
-            Args:
-                *args: The positional arguments to pass to the function.
-                **kwargs: The keyword arguments to pass to the function.
-            """
+            cache_key = (
+                f"{class_name}{func.__name__}:"
+                f"{pickle_dumps((actual_args, tuple(kwargs.items())))}"
+            )
 
-            key = (args, tuple(kwargs.items()))
-            current_time = time()
-
-            if key in cache:
-                result, timestamp = cache[key]
-                if current_time - timestamp < ttl:
-                    return result
-
-                del cache[key]
+            cached_result = REDIS_CLIENT.get(cache_key)
+            if cached_result is not None:
+                return pickle_loads(cached_result)
 
             result = func(*args, **kwargs)
-            cache[key] = (result, current_time)
-
+            REDIS_CLIENT.setex(
+                name=cache_key,
+                time=ttl,
+                value=pickle_dumps(result)
+            )
             return result
 
         return wrapper
 
     return decorator
 
+
+def is_cached(function_name: str, *args, class_name: Optional[str] = None, **kwargs) -> bool:
+    actual_class_name = ""
+    if class_name:
+        actual_class_name = class_name + ":"
+
+    cache_key = (
+        f"{actual_class_name}{function_name}:"
+        f"{pickle_dumps((args, tuple(kwargs.items())))}"
+    )
+
+    cached_result = REDIS_CLIENT.get(cache_key)
+    if cached_result is not None:
+        return True
+
+    return False
 
 
 def matches_asterisk_rule(obj: str, asterisk_rule: str) -> bool:
@@ -236,9 +241,8 @@ def compare_numbers(field_data: Any, value: Any, morethan: bool = False) -> bool
         bool: True if the comparison is true, False otherwise.
     """
 
-    if isinstance(field_data, str):
-        if field_data.is_digit():
-            field_data = int(field_data)
+    if isinstance(field_data, str) and field_data.isdigit():
+        field_data = int(field_data)
 
     if not isinstance(field_data, int):
         return False
