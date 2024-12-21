@@ -5,11 +5,12 @@ from gunicorn.app.base import BaseApplication
 from flask import Flask, Response, request, g
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from cli import init_cli
 from src.access import verify_access
 from src.render import render_template
 from src.crypto import sha256_hash_text
-from src.ddos_mitigation import rate_limit, is_ip_malicious
 from src.state import get_state, create_state, get_beam_id
+from src.ddos_mitigation import rate_limit, is_ip_malicious
 from src.utils import CURRENT_DIRECTORY_PATH, Error, text_response
 from src.request import is_post, get_scheme, get_user_agent, get_ip_address
 from src.errors import WEB_ERROR_CODES, NOT_RIGHT_ERROR, UN_OR_PWD_NOT_RIGHT_ERROR
@@ -379,6 +380,11 @@ def robots():
     return text_response("User-agent: *\nDisallow: /")
 
 
+##############
+#### Main ####
+##############
+
+
 class GunicornApp(BaseApplication):
     """
     Custom Gunicorn application for running Flask with programmatically defined options.
@@ -389,6 +395,7 @@ class GunicornApp(BaseApplication):
         self.application = application
         self.options = options or {}
         super().__init__()
+
 
     def load_config(self):
         if not self.cfg:
@@ -413,7 +420,7 @@ def main() -> None:
     Start the application server.
     """
 
-    print(LOGO)
+    init_cli()
 
     create_test_user() # FIXME: Remove create_test_user
 
