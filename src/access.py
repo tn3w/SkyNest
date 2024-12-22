@@ -118,4 +118,4 @@ def verify_access(request: Request, access_token: str) -> Optional[str]:
         else:
             error = NOT_RIGHT_ERROR
 
-    return render_template("grant_access", request, error = error)
+    return render_template("grant_access", error = error)

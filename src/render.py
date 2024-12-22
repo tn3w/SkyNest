@@ -10,18 +10,22 @@ from typing import Optional, Final
 from re import DOTALL, sub, findall
 from os import listdir, path, environ
 
-from flask import Request
+from flask import Response, request, send_file
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 try:
+    from src.state import create_state
     from src.request import get_domain_host
-    from src.utils import TEMPLATES_DIRECTORY_PATH, Error, read_text, load_dotenv
+    from src.captcha import generate_powbox_challenge, create_captcha
+    from src.utils import TEMPLATES_DIRECTORY_PATH, FAVICON_FILE_PATH, Error, read_text, load_dotenv
     from src.localisation import (
         LANGUAGES, get_language, get_translations, translate_text, translate_error
     )
 except ModuleNotFoundError:
+    from state import create_state
     from request import get_domain_host
-    from utils import TEMPLATES_DIRECTORY_PATH, Error, read_text, load_dotenv
+    from captcha import generate_powbox_challenge, create_captcha
+    from utils import TEMPLATES_DIRECTORY_PATH, FAVICON_FILE_PATH, Error, read_text, load_dotenv
     from localisation import (
         LANGUAGES, get_language, get_translations, translate_text, translate_error
     )
@@ -153,16 +157,14 @@ def render_jinja_template(template_html: str, **context) -> str:
     return template_env.render(**context)
 
 
-def render_template(template_name: str, request: Request,
-                    translate_text_fields: Optional[list] = None, **context) -> str:
+def render_template(template_name: str, translate_text_fields: \
+                    Optional[list] = None, **context) -> str:
     """
     Renders a Jinja template with the given context and language settings.
 
     Args:
         template_name (str): The name of the template to render. If the name 
             does not end with '.html', it will be appended.
-        request (Request): The request object used to determine the language 
-            and domain for the template rendering.
         **context: Additional context variables to be passed to the template.
 
     Returns:
@@ -210,3 +212,111 @@ def render_template(template_name: str, request: Request,
         minimized_template = minimized_template.replace(key, value)
 
     return render_jinja_template(minimized_template, **default_context)
+
+
+@lru_cache()
+def render_favicon() -> Response:
+    """
+    Render the favicon for the application.
+
+    Returns:
+        Response: A Flask Response object containing the favicon file.
+    """
+
+    return send_file(FAVICON_FILE_PATH, mimetype="image/vnd.microsoft.icon")
+
+
+def render_login(user_name: Optional[str] = None,
+                 password: Optional[str] = None,
+                 error: Optional[Error] = None) -> str:
+    """
+    Render the login page.
+
+    Args:
+        user_name (Optional[str]): The username entered by the user. Defaults to None.
+        password (Optional[str]): The password entered by the user. Defaults to None.
+        error (Optional[Error]): An optional error message to display. Defaults to None.
+
+    Returns:
+        str: The rendered HTML of the login page.
+    """
+
+    powbox_challenge, powbox_state = generate_powbox_challenge()
+
+    return render_template(
+        "login", error = error, user_name = user_name, password = password,
+        powbox_challenge = powbox_challenge, powbox_state = powbox_state
+    )
+
+
+def render_signup(user_name: Optional[str] = None,
+                  password: Optional[str] = None,
+                  repeated_password: Optional[str] = None,
+                  error: Optional[Error] = None) -> str:
+    """
+    Render the signup page.
+
+    Args:
+        user_name (Optional[str]): The username entered by the user. Defaults to None.
+        password (Optional[str]): The password entered by the user. Defaults to None.
+        repeated_password (Optional[str]): The password repeated by the user
+            for confirmation. Defaults to None.
+        error (Optional[Error]): An optional error message to display. Defaults to None.
+
+    Returns:
+        str: The rendered HTML of the signup page.
+    """
+
+    powbox_challenge, powbox_state = generate_powbox_challenge()
+
+    return render_template(
+        "signup", error = error, user_name = user_name, password = password,
+        repeated_password = repeated_password, powbox_challenge = powbox_challenge,
+        powbox_state = powbox_state
+    )
+
+
+def render_captcha(user_name: str, password: str, error: Optional[Error] = None) -> str:
+    """
+    Render the CAPTCHA page.
+
+    Args:
+        user_name (str): The username entered by the user.
+        password (str): The password entered by the user.
+        error (Optional[Error]): An optional error message to display. Defaults to None.
+
+    Returns:
+        str: The rendered HTML of the CAPTCHA page.
+    """
+
+    images, state = create_captcha(
+        {"user_name": user_name, "password": password}
+    )
+
+    return render_template(
+        "captcha", images = images,
+        state = state, error = error
+    )
+
+
+def render_twofa(user_name: str, password: str, error: Optional[Error] = None) -> str:
+    """
+    Render the two-factor authentication (2FA) page.
+
+    Args:
+        user_name (str): The username entered by the user.
+        password (str): The password entered by the user.
+        error (Optional[Error]): An optional error message to display. Defaults to None.
+
+    Returns:
+        str: The rendered HTML of the two-factor authentication page.
+    """
+
+    state = create_state(
+        "twofa", {
+            "user_name": user_name,
+            "password": password
+        }
+    )
+
+    return render_template("twofa", state = state, error = error)

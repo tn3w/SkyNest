@@ -1,24 +1,26 @@
 from os import environ
-from functools import lru_cache
 from typing import Final, Optional, Tuple, Union
 
 from gunicorn.app.base import BaseApplication
 from werkzeug.middleware.proxy_fix import ProxyFix
-from flask import Flask, Response, request, g, send_file
+from flask import Flask, Response, request, g
 
 from cli import init_cli
 from src.access import verify_access
-from src.render import render_template
 from src.crypto import sha256_hash_text
 from src.state import get_state, create_state, get_beam_id
 from src.ddos_mitigation import rate_limit, is_ip_malicious
 from src.request import get_scheme, get_user_agent, get_ip_address
+from src.utils import CURRENT_DIRECTORY_PATH, text_response
 from src.errors import WEB_ERROR_CODES, NOT_RIGHT_ERROR, UN_OR_PWD_NOT_RIGHT_ERROR
 from src.user import create_test_user, get_signin_error, create_session, verify_twofa
-from src.utils import CURRENT_DIRECTORY_PATH, FAVICON_FILE_PATH, Error, text_response
 from src.captcha import (
-    generate_powbox_challenge, verify_pow_response, create_captcha,
+    generate_powbox_challenge, verify_pow_response,
     get_clicked_images, is_valid_captcha
+)
+from src.render import (
+    render_template, render_favicon, render_login,
+    render_signup, render_captcha, render_twofa
 )
 
 
@@ -89,7 +91,7 @@ def handle_exception(exception: Exception) -> Tuple[str, int]:
         (ACCESS_TOKEN is None or getattr(g, "access_verified", False))
 
     return render_template(
-        "exception", request, ["title", "description"],
+        "exception", ["title", "description"],
         code = code, title = title or "Unexpected Error",
         description = description or "Something unexpected has happened.",
         reveal = reveal
@@ -127,7 +129,7 @@ def checking_browser() -> Optional[str]:
         hashed_ip_address = sha256_hash_text(ip_address)
 
     if rate_limit(ip_address):
-        return render_template("rate_limit", request)
+        return render_template("rate_limit")
 
     challenge_cookie = request.cookies.get("challenge")
     if challenge_cookie:
@@ -154,7 +156,7 @@ def checking_browser() -> Optional[str]:
 
     powbox_challenge, powbox_state = generate_powbox_challenge()
     return render_template(
-        "browser_check", request, powbox_challenge = powbox_challenge,
+        "browser_check", powbox_challenge = powbox_challenge,
         powbox_state = powbox_state, difficulty = POW_DIFFICULTY,
         beam_id = beam_id, reason = reason
     )
@@ -220,7 +222,7 @@ def index():
         str: The rendered HTML of the "index" template.
     """
 
-    return render_template("index", request)
+    return render_template("index")
 
 
 @app.route("/auth", methods = ["GET", "POST"])
@@ -232,42 +234,7 @@ def auth() -> str:
         str: The rendered authentication page.
     """
 
-    return render_template("auth", request)
-
-
-def render_login(user_name: Optional[str] = None,
-                 password: Optional[str] = None,
-                 error: Optional[Error] = None) -> str:
-    powbox_challenge, powbox_state = generate_powbox_challenge()
-
-    return render_template(
-        "login", request,
-        error = error, user_name = user_name, password = password,
-        powbox_challenge = powbox_challenge, powbox_state = powbox_state
-    )
-
-def render_captcha(user_name: str, password: str, error: Optional[Error] = None) -> str:
-    images, state = create_captcha(
-        {"user_name": user_name, "password": password}
-    )
-
-    return render_template(
-        "captcha", request,
-        images = images, state = state, error = error
-    )
-
-def render_twofa(user_name: str, password: str, error: Optional[Error] = None) -> str:
-    state = create_state(
-        "twofa", {
-            "user_name": user_name,
-            "password": password
-        }
-    )
-
-    return render_template(
-        "twofa", request,
-        state = state, error = error
-    )
+    return render_template("auth")
 
 
 @app.get("/login")
@@ -386,22 +353,6 @@ def posted_login() -> Union[str, Response]:
     return render_login(user_name, password)
 
 
-def render_signup(user_name: Optional[str] = None,
-                  password: Optional[str] = None,
-                  repeated_password: Optional[str] = None,
-                  error: Optional[Error] = None) -> str:
-    powbox_challenge, powbox_state = generate_powbox_challenge()
-
-    return render_template(
-        "signup", request,
-        error = error, user_name = user_name,
-        password = password,
-        repeated_password = repeated_password,
-        powbox_challenge = powbox_challenge,
-        powbox_state = powbox_state
-    )
-
-
 @app.get("/signup")
 def signup() -> str:
     """
@@ -419,13 +370,15 @@ def posted_signup() -> str:
     return "Posted"
 
 
-@lru_cache()
-def render_favicon() -> Response:
-    return send_file(FAVICON_FILE_PATH, mimetype="image/vnd.microsoft.icon")
-
-
 @app.route('/favicon.ico')
-def favicon():
+def favicon() -> Response:
+    """
+    Handle requests for the favicon.
+
+    Returns:
+        Response: A Flask Response object containing the favicon file.
+    """
+
     return render_favicon()
 
 
