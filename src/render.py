@@ -214,7 +214,22 @@ def render_template(template_name: str, translate_text_fields: \
     return render_jinja_template(minimized_template, **default_context)
 
 
-@lru_cache()
+def render_text(text: str) -> Response:
+    """
+    Create a plain text response.
+
+    Args:
+        text (str): The text content to be included in the response.
+
+    Returns:
+        Response: A Response object containing the provided text and
+            a MIME type of "text/plain".
+    """
+
+    return Response(text, mimetype = "text/plain")
+
+
+@lru_cache(maxsize=1)
 def render_favicon() -> Response:
     """
     Render the favicon for the application.
@@ -223,7 +238,25 @@ def render_favicon() -> Response:
         Response: A Flask Response object containing the favicon file.
     """
 
-    return send_file(FAVICON_FILE_PATH, mimetype="image/vnd.microsoft.icon")
+    response = send_file(FAVICON_FILE_PATH, mimetype="image/vnd.microsoft.icon")
+    response.headers["Cache-Control"] = "public, max-age=86400"
+
+    return response
+
+
+@lru_cache(maxsize=1)
+def render_robots() -> Response:
+    """
+    Render the robots.txt file for the application.
+
+    Returns:
+        Response: A Flask Response object containing the robots.txt content.
+    """
+
+    response = render_text("User-agent: *\nAllow: /")
+    response.headers["Cache-Control"] = "public, max-age=86400"
+
+    return response
 
 
 def render_login(user_name: Optional[str] = None,

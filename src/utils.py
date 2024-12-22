@@ -45,6 +45,10 @@ CHARACTER_CATEGORIES: Final[list] = [
     "!\'#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
 ]
 
+ALLOWED_PATHS: Final[list[str]] = [
+    "/favicon.ico", "/robots.txt"
+]
+
 FILE_LOCKS: dict[str, Lock] = {}
 
 
@@ -53,6 +57,10 @@ for directory_path in [ASSETS_DIRECTORY_PATH, DATA_DIRECTORY_PATH]:
         continue
 
     makedirs(directory_path, exist_ok = True)
+
+
+def is_path_allowed(request_path: str) -> bool:
+    return request_path in ALLOWED_PATHS
 
 
 def str_to_float(string: str) -> Optional[float]:
@@ -523,21 +531,6 @@ def load_dotenv(file_name: str = ".env") -> None:
             key, value = line.split("=", 1)
 
             environ[key.strip()] = value
-
-
-def text_response(text: str) -> Response:
-    """
-    Create a plain text response.
-
-    Args:
-        text (str): The text content to be included in the response.
-
-    Returns:
-        Response: A Response object containing the provided text and
-            a MIME type of "text/plain".
-    """
-
-    return Response(text, mimetype = "text/plain")
 
 
 def convert_image_to_base64(image_data: bytes) -> str:

@@ -11,7 +11,7 @@ from src.crypto import sha256_hash_text
 from src.state import get_state, create_state, get_beam_id
 from src.ddos_mitigation import rate_limit, is_ip_malicious
 from src.request import get_scheme, get_user_agent, get_ip_address
-from src.utils import CURRENT_DIRECTORY_PATH, text_response
+from src.utils import CURRENT_DIRECTORY_PATH, is_path_allowed
 from src.errors import WEB_ERROR_CODES, NOT_RIGHT_ERROR, UN_OR_PWD_NOT_RIGHT_ERROR
 from src.user import create_test_user, get_signin_error, create_session, verify_twofa
 from src.captcha import (
@@ -19,8 +19,8 @@ from src.captcha import (
     get_clicked_images, is_valid_captcha
 )
 from src.render import (
-    render_template, render_favicon, render_login,
-    render_signup, render_captcha, render_twofa
+    render_template, render_text, render_favicon, render_robots,
+    render_login, render_signup, render_captcha, render_twofa
 )
 
 
@@ -119,7 +119,7 @@ def checking_browser() -> Optional[str]:
             challenge, which will halt further request processing.
     """
 
-    if request.path in ["/favicon.ico", "/robots.txt"]:
+    if is_path_allowed(request.path):
         return None
 
     ip_address = get_ip_address(request)
@@ -175,7 +175,7 @@ if ACCESS_TOKEN:
                 otherwise None to allow the request to proceed.
         """
 
-        if request.path in ["/favicon.ico", "/robots.txt"]:
+        if is_path_allowed(request.path):
             return None
 
         return verify_access(request, ACCESS_TOKEN)
@@ -348,7 +348,7 @@ def posted_login() -> Union[str, Response]:
         cookies["session"] = state
         g.cookies = cookies
 
-        return text_response(user_name)
+        return render_text(user_name)
 
     return render_login(user_name, password)
 
@@ -391,7 +391,7 @@ def robots():
         str: The contents of the robots.txt file, instructing crawlers to avoid the site.
     """
 
-    return text_response("User-agent: *\nDisallow: /")
+    return render_robots()
 
 
 ##############
