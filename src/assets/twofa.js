@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     const inputs = document.querySelectorAll('.code-input');
+    inputs[0].focus();
 
     const form = document.getElementById("form");
     const submitButton = document.getElementById("button");

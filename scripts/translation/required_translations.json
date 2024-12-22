@@ -99,5 +99,6 @@
     "The HTTP version used in your request is not supported by the server.",
     "Unexpected Error",
     "Something unexpected has happened.",
-    "An error has occurred while hashing the access token."
+    "An error has occurred while hashing the access token.",
+    "Back to the main page"
 ]

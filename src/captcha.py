@@ -227,15 +227,14 @@ def get_clicked_images(request: Request) -> list:
 
     clicked_images = []
 
-    index = request.args.get("i")
+    index = request.form.get("i")
     if index:
         clicked_images.append(index[:1])
 
-    if is_post(request):
-        for i in range(9):
-            index = request.form.get(f"i{i}")
-            if index:
-                clicked_images.append(i)
+    for i in range(9):
+        index = request.form.get(f"i{i}")
+        if index:
+            clicked_images.append(i)
 
     cleaned_clicked_images = []
     for number in clicked_images:

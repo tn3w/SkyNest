@@ -4,6 +4,7 @@ src/render.py
 This module provides functionality for rendering HTML templates in a Flask application.
 """
 
+from html import escape
 from functools import lru_cache
 from typing import Optional, Final
 from re import DOTALL, sub, findall
@@ -182,6 +183,11 @@ def render_template(template_name: str, request: Request,
     }
     default_context.update(context)
 
+    default_context = {
+        key: escape(value) if isinstance(value, str) else value
+        for key, value in default_context.items()
+    }
+
     for field in translate_text_fields:
         context_field_content = default_context.get(field, None)
         if isinstance(context_field_content, str):
@@ -200,7 +206,7 @@ def render_template(template_name: str, request: Request,
     translations = get_translations(language)
     for key, value in translations.items():
         if "DOMAIN" in value:
-            value = value.replace("DOMAIN", get_domain_host(request))
+            value = value.replace("DOMAIN", escape(get_domain_host(request)))
         minimized_template = minimized_template.replace(key, value)
 
     return render_jinja_template(minimized_template, **default_context)

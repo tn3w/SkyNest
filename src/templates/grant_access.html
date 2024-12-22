@@ -138,7 +138,7 @@
             This page is protected. Please enter your access token to view the project.
         </p>
         <form method="post" action="">
-            <input{% if "access_token" in error.fields %} class="error"{% endif %} name="access_token" type="text" placeholder="Enter access token" required>
+            <input{% if "access_token" in error.fields %} class="error"{% endif %} name="access_token" type="text" placeholder="Enter access token" autofocus required>
             <button type="submit">Submit</button>
         </form>
         <p class="small">

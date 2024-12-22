@@ -70,11 +70,20 @@
                 grid-gap: 10px;
             }
 
+            .image-grid form {
+                margin: 0;
+                padding: 0;
+                width: 100px;
+            }
+
             .grid-image {
                 width: 100px;
                 height: 100px;
                 border-radius: 5px;
                 box-shadow: 2px 2px 5px var(--border);
+                cursor: pointer;
+                padding: 0;
+                border: none;
             }
 
             @media only screen and (max-width: 670px) {
@@ -126,7 +135,11 @@
         {% endif %}
         <div class="image-grid">
             {% for image in images %}
-            <a href="/login?state={{ state }}&i={{ loop.index0 }}"><img src="{{ image }}" alt="Image {{ loop.index0 }}" class="grid-image"></a>
+            <form action="/login" method="post" style="display: inline;">
+                <input type="hidden" name="state" value="{{ state }}">
+                <input type="hidden" name="i" value="{{ loop.index0 }}">
+                <input type="image" src="{{ image }}" alt="Image {{ loop.index0 }}" class="grid-image">
+            </form>
             {% endfor %}
         </div>
         {% if creator|default %}

@@ -183,7 +183,7 @@
         <div class="error-message">{{ error.message }}</div>
         {% endif %}
         <form method="post" action="/login">
-            <input class="input{% if 'user_name' in error.fields %} error{% endif %}"{% if user_name|default %} value="{{ user_name }}"{% endif %} type="text" name="user_name" placeholder="Username" required/>
+            <input class="input{% if 'user_name' in error.fields %} error{% endif %}"{% if user_name|default %} value="{{ user_name }}"{% endif %} type="text" name="user_name" placeholder="Username" autofocus required/>
             <div class="password-container">
                 <input class="input password-input{% if 'password' in error.fields %} error{% endif %}"{% if password|default %} value="{{ password }}"{% endif %} type="password" name="password" placeholder="Password" id="password" required/>
                 <div class="toggle-icon" id="toggle-password">

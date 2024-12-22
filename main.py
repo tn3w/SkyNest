@@ -231,8 +231,55 @@ def auth() -> str:
     return render_template("auth", request)
 
 
-@app.route("/login", methods = ["GET", "POST"])
-def login() -> Union[str, Response]:
+def render_login(user_name: Optional[str] = None,
+                 password: Optional[str] = None,
+                 error: Optional[Error] = None) -> str:
+    powbox_challenge, powbox_state = generate_powbox_challenge()
+
+    return render_template(
+        "login", request,
+        error = error, user_name = user_name, password = password,
+        powbox_challenge = powbox_challenge, powbox_state = powbox_state
+    )
+
+def render_captcha(user_name: str, password: str, error: Optional[Error] = None) -> str:
+    images, state = create_captcha(
+        {"user_name": user_name, "password": password}
+    )
+
+    return render_template(
+        "captcha", request,
+        images = images, state = state, error = error
+    )
+
+def render_twofa(user_name: str, password: str, error: Optional[Error] = None) -> str:
+    state = create_state(
+        "twofa", {
+            "user_name": user_name,
+            "password": password
+        }
+    )
+
+    return render_template(
+        "twofa", request,
+        state = state, error = error
+    )
+
+
+@app.get("/login")
+def login() -> str:
+    """
+    Renders the login.html template.
+
+    Returns:
+        str: The rendered template.
+    """
+
+    return render_login()
+
+
+@app.post("/login")
+def posted_login() -> Union[str, Response]:
     """
     Handle the login process, including form submission, CAPTCHA verification, 
     and two-factor authentication (2FA).
@@ -244,42 +291,9 @@ def login() -> Union[str, Response]:
       - Setting up a session for a successful login.
 
     Returns:
-        str: The rendered template or response text based on the current login state.
+        Union[str, Response]: The rendered template or response
+            text based on the current login state.
     """
-
-    def render_login(user_name: Optional[str] = None,
-                     password: Optional[str] = None,
-                     error: Optional[Error] = None) -> str:
-        powbox_challenge, powbox_state = generate_powbox_challenge()
-
-        return render_template(
-            "login", request,
-            error = error, user_name = user_name, password = password,
-            powbox_challenge = powbox_challenge, powbox_state = powbox_state
-        )
-
-    def render_captcha(user_name: str, password: str, error: Optional[Error] = None) -> str:
-        images, state = create_captcha(
-            {"user_name": user_name, "password": password}
-        )
-
-        return render_template(
-            "captcha", request,
-            images = images, state = state, error = error
-        )
-
-    def render_twofa(user_name: str, password: str, error: Optional[Error] = None) -> str:
-        state = create_state(
-            "twofa", {
-                "user_name": user_name,
-                "password": password
-            }
-        )
-
-        return render_template(
-            "twofa", request,
-            state = state, error = error
-        )
 
     user_name: Optional[str] = None
     password: Optional[str] = None
@@ -289,7 +303,7 @@ def login() -> Union[str, Response]:
     is_valid_password = False
     is_totp_verified = False
 
-    state = request.args.get("state")
+    state = request.form.get("state")
     if state:
         state_name, state_data = get_state(state, True)
         if state_name:
@@ -315,14 +329,14 @@ def login() -> Union[str, Response]:
         if state_name == "twofa":
             is_captcha_verified = True
 
-            token = request.args.get("codes", None)
+            token = request.form.get("codes", None)
             is_totp_verified = verify_twofa(user_name, token)
             if not is_totp_verified:
                 return render_twofa(user_name, password, NOT_RIGHT_ERROR)
 
             is_valid_password = True
 
-    if is_post(request) and not submitted:
+    if not submitted:
         user_name = request.form.get("user_name")
         password = request.form.get("password")
         submitted = user_name is not None or password is not None
@@ -366,6 +380,39 @@ def login() -> Union[str, Response]:
         return text_response(user_name)
 
     return render_login(user_name, password)
+
+
+def render_signup(user_name: Optional[str] = None,
+                  password: Optional[str] = None,
+                  repeated_password: Optional[str] = None,
+                  error: Optional[Error] = None) -> str:
+    powbox_challenge, powbox_state = generate_powbox_challenge()
+
+    return render_template(
+        "signup", request,
+        error = error, user_name = user_name,
+        password = password,
+        repeated_password = repeated_password,
+        powbox_challenge = powbox_challenge,
+        powbox_state = powbox_state
+    )
+
+
+@app.get("/signup")
+def signup() -> str:
+    """
+    Renders the signup.html template.
+
+    Returns:
+        str: The rendered template.
+    """
+
+    return render_signup()
+
+
+@app.post("/signup")
+def posted_signup() -> str:
+    return "Posted"
 
 
 @app.route("/robots.txt", methods = ["GET", "POST"])

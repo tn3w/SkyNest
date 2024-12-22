@@ -94,7 +94,7 @@
                 outline: none;
             }
 
-            .noscript-input {
+            #noscript-input {
                 padding: 0.8em;
                 font-size: 1em;
                 letter-spacing: 10px;
@@ -189,7 +189,7 @@
         {% if error|default %}
         <div class="error-message">{{ error.message }}</div>
         {% endif %}
-        <form id="form" class="form" action="/login" method="get">
+        <form id="form" class="form" action="/login" method="post">
             <input type="hidden" name="state" value="{{ state }}">
             <div class="script">
                 <div class="input-container">
@@ -203,7 +203,7 @@
                 <button id="button" type="submit" disabled>Next</button>
             </div>
             <div class="noscript">
-                <input type="text" name="codes" placeholder="XXXXXX" maxlength="6" pattern="\d{6}" id="noscript-input" class="noscript-input" required/>
+                <input type="text" name="codes" placeholder="XXXXXX" inputmode="numeric" maxlength="6" pattern="\d{6}" id="noscript-input" required/>
                 <button type="submit">Next</button>
             </div>
         </form>
@@ -221,6 +221,6 @@
                 }
             </style>
         </noscript>
-        <script>document.addEventListener("DOMContentLoaded",(()=>{const e=document.getElementById("noscript-input");e&&e.remove();const t=document.querySelectorAll(".code-input"),n=document.getElementById("form"),a=document.getElementById("button"),l=()=>Array.from(t).every((e=>""!==e.value.trim())),d=()=>{a.disabled=!l()};t.forEach(((e,n)=>{e.addEventListener("input",(e=>{const a=e.target.value;/^\d$/.test(a)?(e.target.value=a,n<t.length-1&&t[n+1].focus()):e.target.value="",d()})),e.addEventListener("keydown",(e=>{if("Backspace"===e.key&&""===e.target.value&&n>0){const e=t[n-1];e.focus(),e.setSelectionRange(e.value.length,e.value.length)}})),e.addEventListener("paste",(e=>{const a=e.clipboardData.getData("text").match(/\d/g);if(a){let e=0;for(let l=n;l<t.length&&e<a.length;l++)t[l].value=a[e++];if(e<a.length)for(let l=0;l<n&&e<a.length;l++)t[l].value=a[e++]}e.preventDefault(),d()}))})),a.addEventListener("click",(()=>{l()&&((()=>{const e=Array.from(t).map((e=>e.value)).join(""),a=document.createElement("input");a.type="hidden",a.name="codes",a.value=e,n.appendChild(a)})(),n.submit())}))}));</script>
+        <script>document.addEventListener("DOMContentLoaded",(()=>{const e=document.getElementById("noscript-input");e&&e.remove();const t=document.querySelectorAll(".code-input");t[0].focus();const n=document.getElementById("form"),a=document.getElementById("button"),l=()=>Array.from(t).every((e=>""!==e.value.trim())),o=()=>{a.disabled=!l()};t.forEach(((e,n)=>{e.addEventListener("input",(e=>{const a=e.target.value;/^\d$/.test(a)?(e.target.value=a,n<t.length-1&&t[n+1].focus()):e.target.value="",o()})),e.addEventListener("keydown",(e=>{if("Backspace"===e.key&&""===e.target.value&&n>0){const e=t[n-1];e.focus(),e.setSelectionRange(e.value.length,e.value.length)}})),e.addEventListener("paste",(e=>{const a=e.clipboardData.getData("text").match(/\d/g);if(a){let e=0;for(let l=n;l<t.length&&e<a.length;l++)t[l].value=a[e++];if(e<a.length)for(let l=0;l<n&&e<a.length;l++)t[l].value=a[e++]}e.preventDefault(),o()}))})),a.addEventListener("click",(()=>{l()&&((()=>{const e=Array.from(t).map((e=>e.value)).join(""),a=document.createElement("input");a.type="hidden",a.name="codes",a.value=e,n.appendChild(a)})(),n.submit())}))}));</script>
     </body>
 </html>

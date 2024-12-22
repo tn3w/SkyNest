@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Create Account | SkyNest</title>
+        <title>Create account | SkyNest</title>
         <style>
             :root {
                 --background: #f7f9fc;
@@ -12,6 +12,10 @@
                 --button-hover: #b0b3b8;
                 --highlight-blue: #007bff;
                 --second-highlight-blue: #66b2ff;
+                {% if error|default %}
+                --error: #ff6c6c;
+                --second-error: #ff3f3f;
+                {% endif %}
             }
 
             @media (prefers-color-scheme: dark) {
@@ -22,6 +26,10 @@
                     --button-hover: #6a6a6a;
                     --highlight-blue: #66b2ff;
                     --second-highlight-blue: #007bff;
+                    {% if error|default %}
+                    --error: #ff3f3f;
+                    --second-error: #ff6c6c;
+                    {% endif %}
                 }
             }
 
@@ -51,7 +59,7 @@
                 margin-bottom: 0.2em;
             }
 
-            p {
+            .caption {
                 margin-bottom: 1.5em;
             }
 
@@ -61,19 +69,53 @@
                 align-items: center;
             }
 
-            input {
+            .input {
                 padding: 0.8em;
-                width: 250px;
+                width: 275px;
                 border: 1px solid var(--button-hover);
+                background-color: var(--background);
                 border-radius: 10px;
                 margin-bottom: 1em;
                 font-size: 1em;
                 text-align: left;
             }
 
-            input:focus {
+            .input:focus {
                 border-color: var(--highlight-blue);
                 outline: none;
+            }
+
+            .password-container {
+                position: relative;
+                display: inline-block;
+                width: 100%;
+                margin-bottom: 1em;
+            }
+
+            .password-input {
+                padding-right: 40px;
+                width: 100%;
+                box-sizing: border-box;
+                margin-bottom: 0;
+            }
+
+            .toggle-icon {
+                position: absolute;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                cursor: pointer;
+                width: 24px;
+                height: 24px;
+            }
+
+            .toggle-icon svg {
+                width: 100%;
+                height: 100%;
+            }
+
+            .powbox {
+                width: 280px;
             }
 
             button {
@@ -85,7 +127,7 @@
                 font-size: 1em;
                 cursor: pointer;
                 transition: background-color 0.3s;
-                margin-top: 0.5em;
+                margin-top: 1em;
                 width: 250px;
                 text-decoration: none;
             }
@@ -101,6 +143,13 @@
             }
             {% endif %}
             {% if error|default %}
+            .error {
+                border-color: var(--error);
+            }
+
+            .error:focus {
+                border-color: var(--second-error);
+            }
 
             .error-message {
                 background-color: var(--error);
@@ -127,20 +176,45 @@
             </svg>
         </a>
         <h1>SkyNest</h1>
-        <p>
+        <p class="caption">
             Create account
         </p>
         {% if error|default %}
         <div class="error-message">{{ error.message }}</div>
         {% endif %}
-        <form method="post" action="/signin">
-            <input type="text" name="user_name" placeholder="Username"/>
-            <input type="password" name="password" placeholder="Password"/>
-            <input type="password" name="password_repeat" placeholder="Repeat password"/>
+        <form method="post" action="/signup">
+            <input class="input{% if 'user_name' in error.fields %} error{% endif %}"{% if user_name|default %} value="{{ user_name }}"{% endif %} type="text" name="user_name" placeholder="Username" autofocus required/>
+            <div class="password-container">
+                <input class="input password-input{% if 'password' in error.fields %} error{% endif %}"{% if password|default %} value="{{ password }}"{% endif %} type="password" name="password" placeholder="Password" id="password" required/>
+                <div class="toggle-icon" id="toggle-password">
+                    <svg id="eye-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0" fill="var(--button-hover)"/>
+                    <path d="M21.894 11.553C19.736 7.236 15.904 5 12 5s-7.736 2.236-9.894 6.553a1 1 0 0 0 0 .894C4.264 16.764 8.096 19 12 19s7.736-2.236 9.894-6.553a1 1 0 0 0 0-.894M12 17c-2.969 0-6.002-1.62-7.87-5C5.998 8.62 9.03 7 12 7s6.002 1.62 7.87 5c-1.868 3.38-4.901 5-7.87 5" fill="var(--button-hover)"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="password-container">
+                <input class="input password-input{% if 'repeated_password' in error.fields %} error{% endif %}"{% if repeated_password|default %} value="{{ repeated_password }}"{% endif %} type="password" name="repeated_password" placeholder="Repeat password" id="password" required/>
+                <div class="toggle-icon" id="toggle-repeated-password">
+                    <svg id="eye-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0" fill="var(--button-hover)"/>
+                    <path d="M21.894 11.553C19.736 7.236 15.904 5 12 5s-7.736 2.236-9.894 6.553a1 1 0 0 0 0 .894C4.264 16.764 8.096 19 12 19s7.736-2.236 9.894-6.553a1 1 0 0 0 0-.894M12 17c-2.969 0-6.002-1.62-7.87-5C5.998 8.62 9.03 7 12 7s6.002 1.62 7.87 5c-1.868 3.38-4.901 5-7.87 5" fill="var(--button-hover)"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="powbox" {% if required_language|default %}data-language="{{ required_language }}"{% endif %} data-challenge="{{ powbox_challenge }}"></div>
             <button type="submit">Next</button>
+            <input type="hidden" name="powbox_state" value="{{ powbox_state }}">
         </form>
         {% if creator|default %}
         <p class="creator">Created by: {{ creator }}</p>
         {% endif %}
+        <noscript>
+            <style>
+                .toggle-icon {
+                    display: none;
+                }
+            </style>
+        </noscript>
     </body>
 </html>
