@@ -36,6 +36,8 @@ TEMPLATES_DIRECTORY_PATH: Final[str] = path.join(SOURCE_DIRECTORY_PATH, "templat
 ASSETS_DIRECTORY_PATH: Final[str] = path.join(SOURCE_DIRECTORY_PATH, "assets")
 DATA_DIRECTORY_PATH: Final[str] = path.join(SOURCE_DIRECTORY_PATH, "data")
 
+FAVICON_FILE_PATH: Final[str] = path.join(ASSETS_DIRECTORY_PATH, "favicon.ico")
+
 CHARACTER_CATEGORIES: Final[list] = [
     "abcdefghijklmnopqrstuvwxyz",
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ",

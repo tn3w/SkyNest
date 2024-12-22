@@ -1,9 +1,10 @@
 from os import environ
+from functools import lru_cache
 from typing import Final, Optional, Tuple, Union
 
 from gunicorn.app.base import BaseApplication
-from flask import Flask, Response, request, g
 from werkzeug.middleware.proxy_fix import ProxyFix
+from flask import Flask, Response, request, g, send_file
 
 from cli import init_cli
 from src.access import verify_access
@@ -11,10 +12,10 @@ from src.render import render_template
 from src.crypto import sha256_hash_text
 from src.state import get_state, create_state, get_beam_id
 from src.ddos_mitigation import rate_limit, is_ip_malicious
-from src.utils import CURRENT_DIRECTORY_PATH, Error, text_response
-from src.request import is_post, get_scheme, get_user_agent, get_ip_address
+from src.request import get_scheme, get_user_agent, get_ip_address
 from src.errors import WEB_ERROR_CODES, NOT_RIGHT_ERROR, UN_OR_PWD_NOT_RIGHT_ERROR
 from src.user import create_test_user, get_signin_error, create_session, verify_twofa
+from src.utils import CURRENT_DIRECTORY_PATH, FAVICON_FILE_PATH, Error, text_response
 from src.captcha import (
     generate_powbox_challenge, verify_pow_response, create_captcha,
     get_clicked_images, is_valid_captcha
@@ -116,6 +117,9 @@ def checking_browser() -> Optional[str]:
             challenge, which will halt further request processing.
     """
 
+    if request.path in ["/favicon.ico", "/robots.txt"]:
+        return None
+
     ip_address = get_ip_address(request)
 
     hashed_ip_address = ""
@@ -169,7 +173,7 @@ if ACCESS_TOKEN:
                 otherwise None to allow the request to proceed.
         """
 
-        if request.path in ["/robots.txt"]:
+        if request.path in ["/favicon.ico", "/robots.txt"]:
             return None
 
         return verify_access(request, ACCESS_TOKEN)
@@ -413,6 +417,16 @@ def signup() -> str:
 @app.post("/signup")
 def posted_signup() -> str:
     return "Posted"
+
+
+@lru_cache()
+def render_favicon() -> Response:
+    return send_file(FAVICON_FILE_PATH, mimetype="image/vnd.microsoft.icon")
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return render_favicon()
 
 
 @app.route("/robots.txt", methods = ["GET", "POST"])
